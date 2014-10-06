@@ -630,7 +630,7 @@ angular.module('myApp.directives', []).
                         var s;
                         for(var i=0;i<galArr.length;i++){
                             s=galArr[i];
-                            console.log(galArr[i]);
+                            //console.log(galArr[i]);
                             galul.append("<li><a  title='купить "+ s.categoryName+" оптом от производителя "+s.name+" "+s.colorName+"'" +
                                 "data-ng-click='goToViewed("+i+")'><img style='max-width: 100px; border-color: transparent' src='"+galArr[i].img+"' /></a></li>");
                         }

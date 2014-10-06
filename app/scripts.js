@@ -1,4 +1,1677 @@
 'use strict';
+// jquery-play-sound / jquery.playSound.js
+//Playing sound notifications using Javascript?
+//$.playSound('http://example.org/sound.mp3');
+(function($){
+
+    $.extend({
+        playSound: function(){
+            return $("<embed src='"+arguments[0]+".mp3' hidden='true' autostart='true' loop='false' class='playSound'>" +
+                "<audio autoplay='autoplay' style='display:none;' controls='controls'><source src='"+arguments[0]+".mp3' /><source src='"+arguments[0]+".ogg' /></audio>").appendTo('body');
+        }
+    });
+
+})(jQuery);
+
+String.prototype.insert = function (index, string) {
+    //console.log(string);
+    if (index > 0)
+        return this.substring(0, index) + string + this.substring(index, this.length);
+    else
+        return string + this;
+};
+if (!Array.prototype.indexOf)
+{
+    /**
+     * Add array.indexOf() functionality (exists in >FF 1.5 but not in IE)
+     *
+     * @param {Object} elem Element to find.
+     * @param {Number} [from] Position in array to look from.
+     */
+    Array.prototype.indexOf = function(elem /*, from*/) {
+        var len = this.length;
+
+        var from = Number(arguments[1]) || 0;
+        from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+        if (from < 0) {
+            from += len;
+        }
+
+        for (; from < len; from++) {
+            if (from in this && this[from] === elem) {
+                return from;
+            }
+        }
+
+        return -1;
+    };
+}
+if (!Array.prototype.remove)
+{
+    /**
+     * Add array.remove() convenience method to remove element from array.
+     *
+     * @param {Object} elem Element to remove.
+     */
+    Array.prototype.remove = function(elem) {
+        var index = this.indexOf(elem);
+        alert(index);
+        if (index !== -1) {
+            this.splice(index, 1);
+        }
+    };
+}
+function getCookie(name) {
+    var parts = document.cookie.split(name + "=");
+    if (parts.length == 2) return parts.pop().split(";").shift();
+}
+
+var myApp= angular.module('myApp', ['ngFx',
+
+        'ngRoute',
+        'ui.router',
+        'ngResource',
+        'ngCookies',
+        'ui.bootstrap',
+        'caco.ClientPaginate',
+        'btford.socket-io',
+        'ui.select2',
+        'i.mongoPaginate',
+        'ngAutocomplete',
+        'myApp.controllers',
+        'myApp.filters',
+        'myApp.services',
+        'myApp.directives',
+
+        'pascalprecht.translate',
+        'dialogs.main'
+
+])
+
+
+
+.run(['$rootScope', '$state', '$stateParams','Config','$global','subjectSrv',
+        '$cookieStore','$resource','User','$window',"socket",'Category','$http','$location','Auth',
+        function ($rootScope,   $state,   $stateParams,Config,$global,subjectSrv,
+                  $cookieStore,$resource,User,$window,socket,Category,$http,$location,Auth){
+
+            $rootScope.lang=getCookie('lan');
+            $rootScope.$state = $state;
+            $rootScope.$stateParams = $stateParams;
+            $rootScope.socket = socket;
+
+
+            $rootScope.user=null;
+
+            $rootScope.titles={};
+          $rootScope.commonFilter={"tags":['xx','xx','xx']};
+            $rootScope.config=Config.get(function(res){
+                $rootScope.commonFilter.tags=res.tags;
+                $rootScope.currencyIndex=0;
+                $rootScope.currency='UAH';
+
+                $http.get('/api/getip').success(function (data, status, headers, config) {
+                   //console.log(data);
+                    if (data && data.country_code){
+                        if (data.country_code=='RU' ||data.country_code=='RUS'){
+                            $rootScope.currency="RUB";
+                            $rootScope.countryRUB=true;
+                        } else if (data.country_code=='UA'){
+                            $rootScope.currency="UAH";
+                            $rootScope.countryUAH=true;
+                        }
+                        else {
+                            $rootScope.currency="USD";
+                            $rootScope.countryUSD=true;
+                        }
+                    }
+                }).error(function (data, status, headers, config) {})
+
+            });
+            $rootScope.slides=[];
+            Category.list(function(res){
+                $rootScope.categories=res;
+                if($rootScope.categories[0]){
+                    $rootScope.mainSection=$rootScope.categories[0]._id;
+                    for (var i=0,l=$rootScope.categories.length;i<l;i++){
+                        if ($rootScope.categories[i].section==$rootScope.mainSection){
+                            $rootScope.slides[$rootScope.slides.length]={
+                                    img:$rootScope.categories[i].img,
+                                    name:$rootScope.categories[i].name[$rootScope.lang],
+                                    url:$rootScope.categories[i]._id,
+                                    lang:$rootScope.lang
+                            }
+                        }
+
+                    }
+                }
+
+
+            });
+            $rootScope.changeStuff=false;
+
+            $rootScope.$on('$stateChangeStart', function(event, to, toParams, fromState, fromParams){
+
+                if ($rootScope.lang=='ru'){
+                    $rootScope.titles.pageTitle='Платья оптом и в розницу от украинского производителя Jadone fashion - платья, туники, сарафаны.';
+                    $rootScope.titles.pageKeyWords=
+                        " платья оптом производителя украинского, оптом женский трикотаж, купить, украина, интернет магазин, опт, оптовый, модная женская одежда, женские юбки оптом, " +
+                            "женские платья , сарафаны, женские костюмы, кардиганы, розница , туники " +
+                            " платья французский трикотаж, купить, оптом, беларусь, мода, стиль, россия, казахстан, фабрика, оптом купить"+
+                            'стильная одежда, женская одежда оптом и в розницу, красивая одежда';
+                    $rootScope.titles.pageDescription='Jadone fashion  – сайт для оптовых и розничных покупателей  женской одежлы от  украинского производителя Jadone fashion. ' +
+                        'Здесь Вы можете купить стильные и красивые женские платья , сарафаны, костюмы, кардиганы и туники, выполненные из качественных тканей.';
+
+                }
+                if (((to.name=='language.login' || to.name=='language.signup') &&Auth.isLoggedIn())||
+                    (to.name=='language.customOrder' && !Auth.isLoggedIn())){
+                    //console.log(toParams);
+                    $rootScope.$state.transitionTo('language.home',{'lang':toParams.lang});
+                }
+            })
+
+            $rootScope.$on('$stateChangeSuccess', function (ev, to, toParams, from, fromParams) {
+                if ($window.ga)
+                    $window.ga('send', 'pageview', { page: $location.path() });
+                $('.zoomContainer').remove();
+
+
+                if(to.name=='language.stuff' && from.name=='language.stuff.detail'){
+                    $rootScope.changeStuff=true;
+                }
+
+            });
+}])
+
+.config(['$stateProvider', '$urlRouterProvider','$locationProvider','dialogsProvider','$translateProvider',function ($stateProvider,$urlRouterProvider,$locationProvider,dialogsProvider,$translateProvider){
+
+
+            dialogsProvider.useBackdrop('static');
+            dialogsProvider.useEscClose(true);
+            dialogsProvider.useCopy(false);
+            dialogsProvider.setSize('sm');
+
+            $translateProvider.translations('ru',{
+                DIALOGS_ERROR: "Ошибка",
+                DIALOGS_ERROR_MSG: "Se ha producido un error desconocido.",
+                DIALOGS_CLOSE: "Закрыть",
+                DIALOGS_PLEASE_WAIT: "Espere por favor",
+                DIALOGS_PLEASE_WAIT_ELIPS: "Espere por favor...",
+                DIALOGS_PLEASE_WAIT_MSG: "Esperando en la operacion para completar.",
+                DIALOGS_PERCENT_COMPLETE: "% Completado",
+                DIALOGS_NOTIFICATION: "Уведомление",
+                DIALOGS_NOTIFICATION_MSG: "Notificacion de aplicacion Desconocido.",
+                DIALOGS_CONFIRMATION: "Confirmacion",
+                DIALOGS_CONFIRMATION_MSG: "Подтвердите",
+                DIALOGS_OK: "Ок",
+                DIALOGS_YES: "Да",
+                DIALOGS_NO: "Нет"
+            });
+            $translateProvider.preferredLanguage('ru');
+
+
+
+        var lang=getCookie('lan');
+        if (!lang || (lang!='en'&& lang!='ru')) {
+            lang='ru';
+            document.cookie = "lan=ru;path=/";
+        }
+
+
+
+
+
+
+        $locationProvider.html5Mode(true);
+        $locationProvider.hashPrefix('!');
+        $urlRouterProvider
+            .when('/', '/'+lang+'/home')
+            .otherwise('/');
+
+
+    $stateProvider
+        .state("language", {
+            url: "/:lang",
+            abstract:true,
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/mainFrame.html' },
+            controller: 'mainFrameCtrl'
+        })
+        .state("language.home", {
+            url: "/home",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/home.html' },
+            controller: 'homeCtrl'
+        })
+        .state("language.login", {
+            url: "/login",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/login.html' },
+            controller: 'loginCtrl'
+        })
+        .state("language.signup", {
+            url: "/signup?email",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/signup.html' },
+            controller: 'signupCtrl'
+        })
+
+        .state("language.customOrder", {
+            url: "/customorder?num",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/customorder.html' },
+            controller:'customOrderCtrl',
+onEnter: ['Auth','$rootScope',function (Auth,$rootScope) {
+                console.log(Auth.isLoggedIn());
+                if (!Auth.isLoggedIn()){
+                    console.log($rootScope.$stateParams.lang);
+                    //$rootScope.$state.transitionTo('language.customOrder',{'lang':$rootScope.$stateParams.lang});
+                }
+            }]
+
+        })
+        .state("language.profile", {
+            url: "/profile",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/profile.html' },
+            controller:'profileCtrl'
+        })
+
+        .state("language.settings", {
+            url: "/settings",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/settings.html' },
+            controller: 'settingsCtrl'
+        })
+        .state("language.contacts", {
+            url: "/contacts",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/contacts.html' },
+            controller: 'contactsCtrl'
+        })
+        .state("language.searchStuff", {
+            url: "/searchStuff?searchStr",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/stuff.search.html' },
+            controller: 'searchStuffCtrl'
+        })
+        .state("language.stuffSale", {
+            url: "/stuffsale?sale",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/stuff.search.html' },
+            controller: 'saleStuffCtrl'
+        })
+        .state("language.stuff.detail", {
+            //url: "/:stuffName/:id/:color?size",
+            url: "/stuffdetail/:id/:color?size",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/stuff.detail.html' },
+            controller: 'stuffDetailCtrl'
+        })
+
+        .state("language.stuff", {
+            //url: "/:categoryName/оптом-от-производителя/:category?searchStr?scrollTo",
+            url: "/stuff/category/:category?searchStr?scrollTo",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/stuff.html' },
+            controller: 'stuffCtrl'
+        })
+        .state("language.cart", {
+            url: "/cart",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/cart.html' },
+            controller: 'cartCtrl'
+        })
+
+        .state("language.news.detail", {
+            url: "/newsdetail/:id",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/news.detail.html' },
+            controller: 'newsDetailCtrl'
+        })
+
+        .state("language.news", {
+            url: "/news",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/news.html' },
+            controller: 'newsCtrl'
+        })
+        .state("language.chat", {
+            url: "/chat",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/chat.html' },
+            controller: 'chatCtrl'
+        })
+        .state("language.aboutus", {
+            url: "/aboutus",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/about_us_company.html' }
+//controller:'homeCtrl'
+        })
+        .state("language.delivery", {
+            url: "/delivery",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/about_us_delivery.html' },
+            controller:'deliveryCtrl'
+        })
+        .state("language.payment", {
+            url: "/payment",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/about_us_payment.html' },
+            controller:'paymentCtrl'
+        })
+        .state("language.pay", {
+            url: "/pay?num&sum&currency?desc?kurs",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/pay.html' },
+            controller:'payCtrl'
+        })
+        .state("language.help", {
+            url: "/help",
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/help.html' },
+            //controller:'payCtrl'
+        })
+
+ /*.state("language.searchStuff", {
+           // url: "/searchstuff?searchStr",
+            url:"/ssss",
+            templateUrl: function(stateParam){ return 'views/partials/'+stateParams.lang+'/stuff.search.html' }
+            //controller: 'searchStuffCtrl'
+        })*/
+
+
+
+}])
+
+
+angular.module('caco.ClientPaginate', [])
+
+    .filter('paginate', function(Paginator) {
+        return function(input, rowsPerPage) {
+            /*console.log(input);
+             console.log(input.length);*/
+            if (!input)
+                return;
+            if (!input.length) {
+                return input;
+            }
+
+            if (rowsPerPage) {
+                Paginator.rowsPerPage = rowsPerPage;
+            }
+
+            Paginator.itemCount = input.length;
+
+            return input.slice(parseInt(Paginator.page * Paginator.rowsPerPage), parseInt((Paginator.page + 1) * Paginator.rowsPerPage + 1) - 1);
+        }
+    })
+
+    .filter('forLoop', function() {
+        return function(input, start, end) {
+            input = new Array(end - start);
+            for (var i = 0; start < end; start++, i++) {
+                input[i] = start;
+            }
+
+            return input;
+        }
+    })
+
+    .service('Paginator', function ($rootScope) {
+        this.page = 0;
+        this.rowsPerPage = 54
+        this.itemCount = 0;
+
+        this.setPage = function (page) {
+            if (page > this.pageCount()) {
+                return;
+            }
+
+            this.page = page;
+        };
+
+        this.nextPage = function () {
+            if (this.isLastPage()) {
+                return;
+            }
+
+            this.page++;
+        };
+
+        this.perviousPage = function () {
+            if (this.isFirstPage()) {
+                return;
+            }
+
+            this.page--;
+        };
+
+        this.firstPage = function () {
+            this.page = 0;
+        };
+
+        this.lastPage = function () {
+            this.page = this.pageCount() - 1;
+        };
+
+        this.isFirstPage = function () {
+            return this.page == 0;
+        };
+
+        this.isLastPage = function () {
+            return this.page == this.pageCount() - 1;
+        };
+
+        this.pageCount = function () { var count = Math.ceil(parseInt(this.itemCount, 10) / parseInt(this.rowsPerPage, 10)); if (count === 1) { this.page = 0; } return count;
+        };
+        /*this.pageCount = function () {
+         return Math.ceil(parseInt(this.itemCount) / parseInt(this.rowsPerPage));
+         };*/
+    })
+
+    .directive('paginator', function factory() {
+        return {
+            restrict:'E',
+            controller: function ($scope, Paginator) {
+                $scope.paginator = Paginator;
+            },
+            templateUrl: 'paginationControl.html'
+        };
+    })
+
+
+.directive('mongoPaginatorAll', function () {
+    return {
+        restrict:'E',
+        scope :{
+            page:'=',
+            row:'=',
+            rowsPerPage :'@',
+            totalItems:'='
+        },
+        link: function (scope, element, attrs, controller) {
+            scope.paginator={};
+            scope.paginator.page=0;
+            scope.paginator.itemCount=0;
+            scope.row=scope.paginator.rowsPerPage=scope.rowsPerPage;
+
+
+            scope.paginator.setPage = function (page) {
+                if (page > scope.paginator.pageCount()) {
+                    return;
+                }
+                scope.paginator.page = page;
+            };
+            scope.paginator.nextPage = function () {
+                if (scope.paginator.isLastPage()) {
+                    return;
+                }
+                scope.paginator.page++;
+            };
+            scope.paginator.perviousPage = function () {
+                if (scope.paginator.isFirstPage()) {
+                    return;
+                }
+                scope.paginator.page--;
+            };
+            scope.paginator.firstPage = function() {
+                scope.paginator.page = 0;
+            };
+            scope.paginator.lastPage = function () {
+                scope.paginator.page = scope.paginator.pageCount() - 1;
+            };
+            scope.paginator.isFirstPage = function () {
+                return scope.paginator.page == 0;
+            };
+            scope.paginator.isLastPage = function () {
+                return scope.paginator.page == scope.paginator.pageCount() - 1;
+            };
+            scope.paginator.pageCount = function () {
+                var count = Math.ceil(parseInt(scope.paginator.itemCount, 10) / parseInt(scope.paginator.rowsPerPage, 10)); if (count === 1) { scope.paginator.page = 0; }
+                //console.log( count);
+                return count;
+            };
+            scope.$watch('totalItems',function(n,o){
+                scope.paginator.itemCount=scope.totalItems;
+            })
+            scope.$watch("paginator.page",function(n,o){
+                scope.page=scope.paginator.page;
+            })
+        },
+        templateUrl: 'manager/views/templates/mongoPaginationControlAll.html'
+    };
+})
+
+
+angular.module('btford.socket-io', []).
+    provider('socketFactory', function () {
+
+        // when forwarding events, prefix the event name
+        var defaultPrefix = 'socket:',
+            ioSocket;
+
+        // expose to provider
+        this.$get = function ($rootScope, $timeout) {
+
+            var asyncAngularify = function (socket, callback) {
+                return callback ? function () {
+                    var args = arguments;
+                    $timeout(function () {
+                        callback.apply(socket, args);
+                    }, 0);
+                } : angular.noop;
+            };
+
+            return function socketFactory (options) {
+                options = options || {};
+                var socket = options.ioSocket || io.connect();
+
+                var prefix = options.prefix || defaultPrefix;
+                var defaultScope = options.scope || $rootScope;
+
+                var addListener = function (eventName, callback) {
+                    socket.on(eventName, asyncAngularify(socket, callback));
+                };
+
+                var wrappedSocket = {
+                    on: addListener,
+                    addListener: addListener,
+                    socket : socket,
+                    emit: function (eventName, data, callback) {
+                        return socket.emit(eventName, data, asyncAngularify(socket, callback));
+                    },
+
+                    removeListener: function () {
+                        return socket.removeListener.apply(socket, arguments);
+                    },
+
+                    // when socket.on('someEvent', fn (data) { ... }),
+                    // call scope.$broadcast('someEvent', data)
+                    forward: function (events, scope) {
+                        if (events instanceof Array === false) {
+                            events = [events];
+                        }
+                        if (!scope) {
+                            scope = defaultScope;
+                        }
+                        events.forEach(function (eventName) {
+                            var prefixedEvent = prefix + eventName;
+                            var forwardBroadcast = asyncAngularify(socket, function (data) {
+                                scope.$broadcast(prefixedEvent, data);
+                            });
+                            scope.$on('$destroy', function () {
+                                socket.removeListener(eventName, forwardBroadcast);
+                            });
+                            socket.on(eventName, forwardBroadcast);
+                        });
+                    }
+                };
+
+                return wrappedSocket;
+            };
+        };
+    });
+
+angular.module('i.mongoPaginate', [])
+
+    .filter('paginate', function(Paginator) {
+        return function(input, rowsPerPage) {
+            /*console.log(input);
+             console.log(input.length);*/
+            if (!input)
+                return;
+            if (!input.length) {
+                return input;
+            }
+
+            if (rowsPerPage) {
+                Paginator.rowsPerPage = rowsPerPage;
+            }
+
+            Paginator.itemCount = input.length;
+
+            return input.slice(parseInt(Paginator.page * Paginator.rowsPerPage), parseInt((Paginator.page + 1) * Paginator.rowsPerPage + 1) - 1);
+        }
+    })
+
+    .filter('forLoop', function() {
+        return function(input, start, end) {
+            input = new Array(end - start);
+            for (var i = 0; start < end; start++, i++) {
+                input[i] = start;
+            }
+
+            return input;
+        }
+    })
+
+    .service('mongoPaginator', function ($rootScope) {
+        this.page = 0;
+        this.rowsPerPage = ($rootScope.config.perPage)?$rootScope.config.perPage:20
+        this.itemCount = 0;
+        //this.pageCount =13
+
+        this.setPage = function (page) {
+            if (page > this.pageCount()) {
+                return;
+            }
+
+            this.page = page;
+            notifyObservers();
+        };
+
+        this.nextPage = function () {
+            if (this.isLastPage()) {
+                return;
+            }
+
+            this.page++;
+            notifyObservers();
+
+        };
+
+        this.perviousPage = function () {
+            if (this.isFirstPage()) {
+                return;
+            }
+
+            this.page--;
+            notifyObservers();
+        };
+
+        this.firstPage = function () {
+            this.page = 0;
+            notifyObservers();
+        };
+
+        this.lastPage = function () {
+            this.page = this.pageCount() - 1;
+            notifyObservers();
+        };
+
+        this.isFirstPage = function () {
+            return this.page == 0;
+            notifyObservers();
+        };
+
+        this.isLastPage = function () {
+            return this.page == this.pageCount() - 1;
+            notifyObservers();
+        };
+
+        this.pageCount = function () {
+            //console.log(this.itemCount);
+            var count = Math.ceil(parseInt(this.itemCount, 10) / parseInt(this.rowsPerPage, 10)); if (count === 1) { this.page = 0; }
+            //console.log( count);
+            return count;
+        };
+
+//http://stackoverflow.com/questions/12576798/angularjs-how-to-watch-service-variables
+
+        var observerCallbacks = [];
+
+        //register an observer
+        this.registerObserverCallback = function(callback){
+            observerCallbacks.push(callback);
+        };
+
+        //call this when you know 'foo' has been changed
+        var notifyObservers = function(){
+            angular.forEach(observerCallbacks, function(callback){
+                callback();
+            });
+        };
+
+    })
+
+    .directive('mongoPaginator', function factory() {
+        return {
+            restrict:'E',
+            controller: function ($scope, mongoPaginator) {
+                $scope.paginator = mongoPaginator;
+            },
+            templateUrl: 'manager/views/templates/mongoPaginationControl.html'
+        };
+    });
+
+
+
+/**
+ * A directive for adding google places autocomplete to a text box
+ * google places autocomplete info: https://developers.google.com/maps/documentation/javascript/places
+ *
+ * Simple Usage:
+ *
+ * <input type="text" ng-autocomplete="result"/>
+ *
+ * creates the autocomplete text box and gives you access to the result
+ *
+ *   + `ng-autocomplete="result"`: specifies the directive, $scope.result will hold the textbox result
+ *
+ *
+ * Advanced Usage:
+ *
+ * <input type="text" ng-autocomplete="result" details="details" options="options"/>
+ *
+ *   + `ng-autocomplete="result"`: specifies the directive, $scope.result will hold the textbox autocomplete result
+ *
+ *   + `details="details"`: $scope.details will hold the autocomplete's more detailed result; latlng. address components, etc.
+ *
+ *   + `options="options"`: options provided by the user that filter the autocomplete results
+ *
+ *      + options = {
+ *           types: type,        string, values can be 'geocode', 'establishment', '(regions)', or '(cities)'
+ *           bounds: bounds,     google maps LatLngBounds Object
+ *           country: country    string, ISO 3166-1 Alpha-2 compatible country code. examples; 'ca', 'us', 'gb'
+ *         }
+ *
+ *
+ *
+ *
+ *
+ */
+
+
+
+//angular.module('dialogs.services', ['ui.bootstrap.modal'])
+
+
+angular.module( "ngAutocomplete", [])
+    .directive('ngAutocomplete1', function($parse,$timeout) {
+        return {
+
+            require: 'ngModel',
+            scope: {
+                ngModel: '=',
+                options: '=?',
+                details: '=?',
+                fromList: '=',
+                cityId:   '=',
+                countryId:'='
+            },
+
+            link: function(scope, element, attrs, model) {
+
+                //options for autocomplete
+                //console.log(scope.ngModel);
+                $timeout(function(){
+                    element[0].value=scope.ngModel;
+                })
+
+                //console.log(element);
+                var opts
+               // scope.options.types='cities';
+                //convert options provided to opts
+                var initOpts = function() {
+                    opts = {}
+                   // console.log(scope.options);
+                    if (scope.options) {
+                        if (scope.options.types) {
+                            opts.types = []
+                            //console.log(scope.options.types);
+                            opts.types.push(scope.options.types)
+                        }
+                        if (scope.options.bounds) {
+                            opts.bounds = scope.options.bounds
+                        }
+                        if (scope.options.country) {
+                            opts.componentRestrictions = {
+                                country: scope.options.country
+                            }
+                        }
+                    }
+
+                }
+                initOpts()
+
+                element.bind('blur', function () {
+                    //console.log(scope.ngModel);
+                    //console.log(scope.cityId);
+                    $timeout(function(){
+                        scope.cityId='';
+                    });
+
+
+                    //console.log(scope.cityId);
+                });
+
+                //create new autocomplete
+                //reinitializes on every change of the options provided
+                var newAutocomplete = function() {
+                    var options = {
+                        types: ['(cities)']
+                    };
+
+                    scope.gPlace = new google.maps.places.Autocomplete(element[0], options);
+                    google.maps.event.addListener(scope.gPlace, 'place_changed', function() {
+                        scope.$apply(function() {
+//              if (scope.details) {
+                            scope.details = scope.gPlace.getPlace();
+                            console.log(scope.details);
+                            //scope.cityId=scope.details.
+//              }           console.log();
+                            if(scope.details.address_components && scope.details.address_components.length ){
+                                 for (var i= 0,l=scope.details.address_components.length;i<l;i++){
+                                     var c=scope.details.address_components[i];
+                                     if (c.types && c.types[0] && c.types[0]=='country'){
+                                         console.log(scope.details.address_components[i].short_name);
+                                         scope.countryId=scope.details.address_components[i].short_name;
+                                     }
+                                 }
+                            }
+
+
+                            if (scope.details && scope.details.types && scope.details.types[0]=='locality'){
+
+                                $timeout(function(){
+                                    scope.ngModel=scope.ngAutocomplete = element.val();
+
+                                    scope.cityId=scope.details.place_id;
+                                },100)
+                            }
+
+
+                        });
+                    })
+                }
+                newAutocomplete()
+                /*scope.$watch('ngModel', function (n) {
+                    console.log(n);
+                });*/
+
+                //watch options provided to directive
+                scope.watchOptions = function () {
+                    return scope.options
+                };
+                scope.$watch(scope.watchOptions, function () {
+                    initOpts()
+                    newAutocomplete()
+                    element[0].value = '';
+                    scope.ngAutocomplete = element.val();
+                }, true);
+            }
+        };
+    })
+
+
+    .directive('ngAutocomplete', function() {
+        return {
+            require: 'ngModel',
+            scope: {
+                ngModel: '=',
+                options: '=?',
+                details: '=?',
+                fromList: '='
+            },
+
+            link: function(scope, element, attrs, controller) {
+
+                //options for autocomplete
+                scope.fromList=false;
+                var opts
+                var watchEnter = false
+                //convert options provided to opts
+                var initOpts = function() {
+
+                    opts = {}
+                    if (scope.options) {
+
+                        if (scope.options.watchEnter !== true) {
+                            watchEnter = false
+                        } else {
+                            watchEnter = true
+                        }
+
+                        if (scope.options.types) {
+                            opts.types = []
+                            opts.types.push(scope.options.types)
+                            scope.gPlace.setTypes(opts.types)
+                        } else {
+                            scope.gPlace.setTypes([])
+                        }
+
+                        if (scope.options.bounds) {
+                            opts.bounds = scope.options.bounds
+                            scope.gPlace.setBounds(opts.bounds)
+                        } else {
+                            scope.gPlace.setBounds(null)
+                        }
+
+                        if (scope.options.country) {
+                            opts.componentRestrictions = {
+                                country: scope.options.country
+                            }
+                            scope.gPlace.setComponentRestrictions(opts.componentRestrictions)
+                        } else {
+                            scope.gPlace.setComponentRestrictions(null)
+                        }
+                    }
+                }
+
+                if (scope.gPlace == undefined) {
+                    scope.gPlace = new google.maps.places.Autocomplete(element[0], {});
+                }
+
+                google.maps.event.addListener(scope.gPlace, 'place_changed', function() {
+                    var result = scope.gPlace.getPlace();
+                    if (result !== undefined) {
+                        if (result.address_components !== undefined) {
+
+                            scope.$apply(function() {
+
+                                scope.details = result;
+
+                                controller.$setViewValue(element.val());
+                            });
+                        }
+                        else {
+                            if (watchEnter) {
+                                getPlace(result)
+                            }
+                        }
+                    }
+                })
+
+                //function to get retrieve the autocompletes first result using the AutocompleteService
+                var getPlace = function(result) {
+                    var autocompleteService = new google.maps.places.AutocompleteService();
+                    if (result.name.length > 0){
+                        autocompleteService.getPlacePredictions(
+                            {
+                                input: result.name,
+                                offset: result.name.length
+                            },
+                            function listentoresult(list, status) {
+                                if(list == null || list.length == 0) {
+
+                                    scope.$apply(function() {
+                                        scope.details = null;
+                                    });
+
+                                } else {
+                                    var placesService = new google.maps.places.PlacesService(element[0]);
+                                    placesService.getDetails(
+                                        {'reference': list[0].reference},
+                                        function detailsresult(detailsResult, placesServiceStatus) {
+
+                                            if (placesServiceStatus == google.maps.GeocoderStatus.OK) {
+                                                scope.$apply(function() {
+
+                                                    controller.$setViewValue(detailsResult.formatted_address);
+                                                    element.val(detailsResult.formatted_address);
+
+                                                    scope.details = detailsResult;
+
+                                                    //on focusout the value reverts, need to set it again.
+                                                    var watchFocusOut = element.on('focusout', function(event) {
+                                                        element.val(detailsResult.formatted_address);
+                                                        element.unbind('focusout')
+                                                    })
+
+                                                });
+                                            }
+                                        }
+                                    );
+                                }
+                            });
+                    }
+                }
+
+                controller.$render = function () {
+                    var location = controller.$viewValue;
+                    element.val(location);
+                };
+
+                //watch options provided to directive
+                scope.watchOptions = function () {
+                    return scope.options
+                };
+                scope.$watch(scope.watchOptions, function () {
+                    initOpts()
+                }, true);
+
+            }
+        };
+    });
+
+'use strict';
+
+/* Directives */
+
+angular.module('myApp.directives', []).
+  directive('appVersion', function (version) {
+    return function(scope, elm, attrs) {
+      elm.text(version);
+    };
+  })
+
+ .directive('mongooseError', function () {
+    return {
+        restrict: 'A',
+        require: 'ngModel',
+        link: function(scope, element, attrs, ngModel) {
+            element.on('keydown', function() {
+                return ngModel.$setValidity('mongoose', true);
+            });
+        }
+    };
+})
+
+
+    .directive('pswdCheck', [function () {
+        return {
+            require: 'ngModel',
+            link: function (scope, elem, attrs, ctrl) {
+                var firstPassword = '#' + attrs.pswdCheck;
+                elem.add(firstPassword).on('keyup', function () {
+                    scope.$apply(function () {
+                        var v = elem.val()===$(firstPassword).val();
+                        console.log(v);
+
+                        ctrl.$setValidity('pswdmatch', v);
+                        console.log(ctrl);
+                    });
+                });
+            }
+        }
+    }])
+
+.directive("uiSrefParams", function($state) {
+    return {
+        link: function(scope, elm, attrs) {
+            var params;
+            params = scope.$eval(attrs.uiSrefParams);
+            //console.log(params);
+            return elm.bind("click", function(e) {
+                var button;
+                console.log(params);
+                if (!angular.equals($state.params, params)) {
+                    button = e.which || e.button;
+                    if ((button === 0 || button === 1) && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                        scope.$evalAsync(function() {
+                            return $state.go(".", params);
+                        });
+                        return e.preventDefault();
+                    }
+                }
+            });
+        }
+    };
+})
+    //http://www.befundoo.com/university/tutorials/angularjs-directives-tutorial/
+    // http://tympanus.net/codrops/2011/09/12/elastislide-responsive-carousel/
+    .directive('galleryForZoom', function($compile,$timeout) {
+        return {
+            restrict: 'A',
+            scope:{
+                galleryForZoom:'=',
+                onPhotoSelected: '&'},
+            link: function(scope, element, attrs) {
+                scope.$watch('galleryForZoom',function(oldVal,newVal){
+                    if (oldVal==newVal) return;
+                    linkElastislide(oldVal);
+                })
+
+                function linkElastislide(galArr){
+                    if (galArr.length>2){
+                        var galul =angular.element('<ul id="carousel2"  class="elastislide-list"></ul>');
+                        for(var i=0;i<galArr.length;i++){
+                            galul.append("<li><a  ng-click='toggle("+i+")' data-image='"+galArr[i].thumb+"'  data-zoom-image='"
+                                +galArr[i].img+"'><img id='img_"+i+"'  src='"+galArr[i].thumb+"' /></a></li>");
+                        }
+                        var el= $compile(galul)(scope);
+                        element.parent().append(el);
+                        $timeout(function(){
+                            $('#carousel2').elastislide();
+                        },50);
+
+
+                    /*$.Elastislide.defaults = {
+                        // orientation 'horizontal' || 'vertical'
+                        orientation : 'horizontal',
+
+                        // sliding speed
+                        speed : 1000,
+
+                        // sliding easing
+                        //easing : 'ease-in-out',
+
+                        // the minimum number of items to show.
+                        // when we resize the window, this will make sure minItems are always shown
+                        // (unless of course minItems is higher than the total number of elements)
+                        //minItems : 3,
+                        imageW  : 200,  // the images width
+                        minItems : 5,
+                        margin  : 0,
+                        easing  : 'jswing',
+                        border  : 0,
+
+                        // index of the current item (left most item of the carousel)
+                        start : 0,
+
+                        // click item callback
+                        onClick : function( el, position, evt ) {
+                           *//* $('#carousel2 a').removeClass('active').eq(index).addClass('active');
+                            scope.onPhotoSelected({newIndex: position});*//*
+                            return false; },
+                        onReady : function() { return false; },
+                        onBeforeSlide : function() { return false; },
+                        onAfterSlide : function() { return false; }
+                    };*/
+                    //console.log($.Elastislide.defaults);
+
+                }
+                }
+                scope.toggle = function(index) {
+                    $('#carousel2 a').removeClass('active').eq(index).addClass('active');
+                    scope.onPhotoSelected({newIndex: index});
+                };
+            }
+        }
+    })
+
+
+.directive('ngElevateZoom', function($compile) {
+    return {
+        restrict: 'A',
+        scope: {
+            galleryZoom: '='
+        },
+        link: function(scope, element, attrs) {
+
+            scope.$watch('galleryZoom',function(oldVal,newVal){
+                if (oldVal==newVal) return;
+                linkElevateZoom(oldVal);
+            })
+            /*attrs.$observe('src',function(srcAttribute){
+                console.log("$observe : " +srcAttribute);
+            })*/
+            function linkElevateZoom(galArr){
+                if (!attrs.zoomImage || !attrs.galleryZoom ) return;
+                element.attr('data-zoom-image',attrs.zoomImage);
+                var galDiv = angular.element("<div id='gallery_022'></div>");
+                for(var i=0;i<galArr.length;i++){
+                    galDiv.append("<a  data-image='"+galArr[i].thumb+"' data-zoom-image='"
+                        +galArr[i].img+"'></li>");
+                }
+                element.parent().append(galDiv);
+                $(element).elevateZoom({
+                    gallery:'gallery_022',
+                    zoomType : "inner",
+                    //cursor: "crosshair",
+                    //easing : true,
+                    cursor: 'pointer',
+                    //galleryActiveClass: 'active',
+                    imageCrossfade: true,
+                    //loadingIcon: 'http://www.elevateweb.co.uk/spinner.gif',
+                    zoomWindowWidth:500,
+                    zoomWindowHeight:652,
+                    responsive:true
+                });
+
+            }
+       }
+    };
+})
+
+    //http://www.sitepoint.com/creating-slide-show-plugin-angularjs/
+.directive('myslider', function($timeout) {
+    return {
+        restrict: 'AE',
+        replace: true,
+        scope: {
+            images: '=images'
+        },
+        link: function(scope, elem, attrs) {
+            //console.log(scope.images);
+            scope.$watch('currentIndex', function() {
+                scope.images.forEach(function(image) {
+                    image.visible = false; // make every image invisible
+                });
+
+                scope.images[scope.currentIndex].visible = true; // make the current image visible
+            });
+
+            scope.currentIndex = 0; // Initially the index is at the first image
+
+            scope.next = function() {
+                scope.currentIndex < scope.images.length - 1 ? scope.currentIndex++ : scope.currentIndex = 0;
+            };
+
+            scope.prev = function() {
+                scope.currentIndex > 0 ? scope.currentIndex-- : scope.currentIndex = scope.images.length - 1;
+            };
+            scope.pick = function(i) {
+                scope.currentIndex =i;
+                console.log(scope.currentIndex);
+            };
+
+            var timer;
+            var sliderFunc = function() {
+                timer = $timeout(function() {
+                    scope.next();
+                    timer = $timeout(sliderFunc, 3000);
+                }, 3000);
+            };
+
+            sliderFunc();
+
+            scope.$on('$destroy', function() {
+                $timeout.cancel(timer); // when the scope is getting destroyed, cancel the timer
+            });
+        },
+        templateUrl: 'views/templates/slides.html'
+    };
+})
+
+    //Angular directive to scroll to a given item
+    //http://stackoverflow.com/questions/12790854/angular-directive-to-scroll-to-a-given-item
+
+    .directive('scrollIf', function () {
+        return function (scope, element, attributes) {
+
+            setTimeout(function () {
+                if (scope.$eval(attributes.scrollIf)) {
+                    //console.log(attributes.scrollIf);
+                    //console.log(element[0].offsetTop);
+                    /*console.log(element.parent().parent())
+                    var div = document.getElementById('divElem');
+                    console.log(document.getElementById('divElem'))*/
+                    var div=element.parent().parent();
+                    div.scrollTop(div.scrollTop()+element.position().top);
+                    //div.scrollTop(div.scrollTop()+element[0].position().top);
+
+
+
+
+                }
+            });
+        }
+    })
+
+
+//Angularjs directive to Insert text at textarea caret
+    //http://plnkr.co/edit/Xx1SHwQI2t6ji31COneO?p=preview
+
+    //Why is ngModel.$setViewValue(…) not working from
+//http://stackoverflow.com/questions/15269737/why-is-ngmodel-setviewvalue-not-working-from
+.directive('myText', ['$rootScope', function($rootScope) {
+    return {
+        restrict : 'A', // only activate on element attribute
+        require : '?ngModel', // get a hold of NgModelController
+        scope: {
+            model: '=ngModel'
+        },
+        link: function(scope, element, attrs) {
+            scope.$watch('model', function() {
+                scope.$eval(attrs.ngModel + ' = model');
+            });
+
+            scope.$watch(attrs.ngModel, function(val) {
+                scope.model = val;
+            });
+
+            $rootScope.$on('add', function(e, val) {
+                var domElement = element[0];
+
+                if (document.selection) {
+
+                    domElement.focus();
+                    var sel = document.selection.createRange();
+                    sel.text = val;
+                    scope.model=domElement.value;
+                    domElement.focus();
+                } else if (domElement.selectionStart || domElement.selectionStart === 0) {
+
+                    var startPos = domElement.selectionStart;
+                    var endPos = domElement.selectionEnd;
+                    var scrollTop = domElement.scrollTop;
+                    domElement.value = domElement.value.substring(0, startPos) + val + domElement.value.substring(endPos, domElement.value.length);
+                    scope.model=domElement.value;
+                    //scope.$apply();
+                    domElement.focus();
+                    domElement.selectionStart = startPos + val.length;
+                    domElement.selectionEnd = startPos + val.length;
+                    domElement.scrollTop = scrollTop;
+                } else {
+
+                    domElement.value += val;
+                    scope.model=domElement.value;
+                    domElement.focus();
+                }
+               // scope.$apply();
+
+            });
+        }
+    }
+}])
+
+    .directive('focusMe', function($timeout) {
+        return {
+            scope: { trigger: '=focusMe' },
+            link: function(scope, element) {
+                scope.$watch('trigger', function(value) {
+                    //console.log('dd');
+                    if(value === true) {
+                        //console.log('trigger',value);
+                        //$timeout(function() {
+                        //console.log(element[0]);
+                        $timeout(function(){element[0].focus()},50);
+                        //element[0].focus();
+                        //scope.trigger = false;
+                        //});
+                    }
+                });
+            }
+        };
+    })
+
+
+    .directive('setModel', function($timeout) {
+        return {
+            restrict : 'A', // only activate on element attribute
+            require : '?ngModel', // get a hold of NgModelController
+            scope: {
+                model: '=ngModel'
+            },
+
+            link: function(scope, element,attrs) {
+                //console.log('element[0].value='+element[0].value);
+                    $timeout(function(){
+                        //console.log(element[0].value);
+                        scope.model=element[0].value;
+                    },1000);
+                scope.$watch('model',function(n,o){
+                    //console.log('n- %s, o - %s', n,o);
+                })
+             }
+        };
+    })
+    .directive('setModelPswd', function($timeout,$parse) {
+        return {
+            restrict : 'A', // only activate on element attribute
+            require : '?ngModel', // get a hold of NgModelController
+            scope: {
+                model: '=ngModel'
+            },
+
+
+
+            link: function($scope, $element,$attrs) {
+
+                function setValueFromInputElement() {
+                    //console.log('setValueFromInputElemen');
+                }
+
+               /* $scope.$watch($attrs["ngModel"], function () {
+                    $element.val(modelGet($scope));
+                });*/
+
+                $element.bind("change", function () {
+                    //console.log('sssss');
+                    setValueFromInputElement();
+                });
+
+                $scope.$on("$myNgModelSet", function () {
+                    setValueFromInputElement();
+                })
+
+                //console.log('element[0].value='+element[0].value);
+                /*$timeout(function(){
+                    console.log(element[0].value);
+                    scope.model=element[0].value;
+                },5000);
+                *//*scope.$watch('model',function(n,o){
+                    console.log('n- %s, o - %s', n,o);
+                })*//*
+                scope.element =element[0];
+                scope.$watch('element',function(n,o){
+                    console.log('n- %s, o - %s', n,o);
+                });*/
+
+
+
+
+
+            }
+        };
+    })
+
+//AngularJS browser autofill workaround by using a directive
+//http://stackoverflow.com/questions/14965968/angularjs-browser-autofill-workaround-by-using-a-directive/16800988#16800988
+// Form model doesn't update on autocomplete #1460 https://github.com/angular/angular.js/issues/1460
+
+    .directive('autoFillableField', function() {
+        return {
+            restrict: "A",
+            require: "?ngModel",
+            link: function(scope, element, attrs, ngModel) {
+                setInterval(function() {
+                    var prev_val = '';
+                    if (!angular.isUndefined(attrs.xAutoFillPrevVal)) {
+                        prev_val = attrs.xAutoFillPrevVal;
+                    }
+                    if (element.val()!=prev_val) {
+                        if (!angular.isUndefined(ngModel)) {
+                            if (!(element.val()=='' && ngModel.$pristine)) {
+                                attrs.xAutoFillPrevVal = element.val();
+                                scope.$apply(function() {
+                                    ngModel.$setViewValue(element.val());
+                                });
+                            }
+                        }
+                        else {
+                            element.trigger('input');
+                            element.trigger('change');
+                            element.trigger('keyup');
+                            attrs.xAutoFillPrevVal = element.val();
+                        }
+                    }
+                }, 300);
+            }
+        };
+    })
+
+.directive('autoFillSync', function($timeout) {
+    return {
+        require: 'ngModel',
+        link: function(scope, elem, attrs, ngModel) {
+            var origVal = elem.val();
+            $timeout(function () {
+                var newVal = elem.val();
+                if(ngModel.$pristine && origVal !== newVal) {
+                    ngModel.$setViewValue(newVal);
+                }
+            }, 500);
+        }
+    }
+})
+
+
+//http://plnkr.co/edit/v02xk1o3ORKaptzo40pj?p=preview
+//ng-click not working after compile ng-bind-html
+
+    /*.directive('dir', function($compile, $parse, $sce) {
+        return {
+            restrict: 'E',
+            scope: {
+                message: '=message'
+            }
+            link: function(scope, element, attr) {
+                scope.$watch('message', function() {
+                    if (scope.message){
+                        scope.message.msg = $sce.trustAsHtml(scope.message.msg);
+                        //console.log(html);
+                    }
+                    //var html = $sce.trustAsHtml(attr.content);
+                    //element.html($parse(attr.message)(scope));
+
+                    //$compile(element.contents())(scope);
+                }, true);
+            }
+        }
+    })*/
+
+    .directive('dir', function($compile, $parse) {
+        return {
+            restrict: 'E',
+            link: function(scope, element, attr) {
+                scope.$watch(attr.content, function() {
+                    element.html($parse(attr.content)(scope));
+                    $compile(element.contents())(scope);
+                }, true);
+            }
+        }
+    })
+
+    /*.directive('setModel', function($timeout) {
+        return {
+            restrict : 'A', // only activate on element attribute
+
+            scope: {
+                go: '=go',
+
+            },
+
+            link: function(scope, element,attrs) {
+                console.log('element[0].value='+element[0].value);
+                $timeout(function(){
+                    scope.model=element[0].value;
+                },1000);
+            }
+        };
+    })*/
+
+    .directive("spinner", function($compile){
+        return {
+            restrict: 'E',
+            scope: {enable:"=",
+            idSet:'@'},
+            link: function(scope, element, attr) {
+                console.log(scope.idSet);
+                if (!scope.idSet)
+                    scope.idSet=1;
+                var spinner =angular.element('<div class="spinner" id="spinner'+scope.idSet+'" ng-show="enable" ' +
+                    'style="position: fixed; opacity: 0.6; bottom:0; z-index:2000;' +
+                    'background: #CCC' +
+                    /*'background: ' +
+                     'url(../img/spinner.gif) no-repeat center center #d2e3c3' +*/
+                    '"></div>');
+                var img=angular.element('<img src="../img/spinner.gif" style="position: fixed; bottom:50%; left: 45%; ">');
+                spinner.append(img);
+
+                var el= $compile(spinner)(scope);
+                $('body').append(spinner);
+
+                scope.$on('$destroy', function() {
+                    spinner.remove();
+                    //$('#spinner').remove();
+                });
+                scope.$watch('enable',function(n,o){
+                    if (n){
+                        //console.log('dd');
+                        abso()
+                    }
+                });
+
+                function abso() {
+                    var height= ($("body").height()>$(window).height())?$("body").height():$(window).height();
+
+                    //$('#spinner')
+                        spinner.css({
+                        position: 'fixed',
+                        width: $(window).width(),
+                        height: height
+                    });
+                }
+                $(window).resize(function() {
+                    console.log('sssss');
+                    abso();
+                });
+                /*$(window).scroll(function(){
+                 if($(window).scrollTop() > elementPosition.top){
+                 spinner.css('position','fixed').css('top','0');
+                 } else {
+                 $('#navigation').css('position','static');
+                 }
+                 });*/
+
+                abso();
+
+                /*scope.$watch('enable', function() {
+                 //                element.html($parse(attr.content)(scope));
+                 //                $compile(element.contents())(scope);
+                 console.log(scope.enable);
+                 }, true);*/
+            }
+        }
+    })
+
+
+
+    .directive('loadingWidget', function (requestNotification) {
+        return {
+            restrict: "AC",
+            link: function (scope, element) {
+                // hide the element initially
+                element.hide();
+
+                //subscribe to listen when a request starts
+                requestNotification.subscribeOnRequestStarted(function () {
+                    // show the spinner!
+                    element.show();
+                });
+
+                requestNotification.subscribeOnRequestEnded(function () {
+                    // hide the spinner if there are no more pending requests
+                    if (requestNotification.getRequestCount() === 0) element.hide();
+                });
+            }
+        };
+    })
+
+
+    .directive('elastiSlide', function($compile,$timeout,localStorage) {
+        return {
+            restrict: 'A',
+            scope:{
+                elastiSlide:'=',
+                onPhotoSelected: '&',
+                goId:'@'
+                },
+            link: function(scope, element, attrs) {
+                /*scope.$watch('elastiSlide',function(n,o){
+                    //console.log(n);
+                    //if (n==o) return;
+                    linkElastislide(n);
+                })*/
+                scope.viewedL=localStorage.get('viewed');
+                scope.viewed=[];
+                //console.log(scope.viewedL.length);
+                for (var i = scope.viewedL.length-1,l=0;i>=l;i--){
+                    //console.log(i);
+                    scope.viewed[scope.viewed.length]= scope.viewedL[i];
+                }
+                $timeout(function(){
+                    linkElastislide(scope.viewed)
+                },50);
+
+                function linkElastislide(galArr){
+                    /*console.log(galArr);
+                    console.log(scope.goId);*/
+                    if (galArr.length>2){
+
+                        //var div= angular.element('<div class="fixed-bar"></div>');
+                        var galul =angular.element('<ul id="carouse'+scope.goId+'"  class="elastislide-list"></ul>');
+                        var s;
+                        for(var i=0;i<galArr.length;i++){
+                            s=galArr[i];
+                            //console.log(galArr[i]);
+                            galul.append("<li><a  title='купить "+ s.categoryName+" оптом от производителя "+s.name+" "+s.colorName+"'" +
+                                "data-ng-click='goToViewed("+i+")'><img style='max-width: 100px; border-color: transparent' src='"+galArr[i].img+"' /></a></li>");
+                        }
+                        var el= $compile(galul)(scope);
+                        element.parent().append(el);
+                        $timeout(function(){
+                            $('#carouse'+scope.goId).elastislide();
+                        },50);
+
+
+                    }
+                    scope.$on('$destroy', function() {
+                        $('#carouse'+scope.goId).remove();
+                    });
+                    scope.goToViewed = function(index){
+                        scope.onPhotoSelected({itemToGo:galArr[index]});
+                    }
+                }
+
+            }
+        }
+    })
+
+
+'use strict';
 //Получаем i18n список стран, регионов, населенных пунктов из ВКонтакте
 //http://habrahabr.ru/post/204840/
 
@@ -3197,3 +4870,1020 @@ angular.module('myApp.controllers', [])
 
 
     }])
+'use strict';
+
+/* Filters */
+
+angular.module('myApp.filters', []).
+  filter('interpolate', function (version) {
+    return function (text) {
+      return String(text).replace(/\%VERSION\%/mg, version);
+    }
+  })
+
+.filter('cut', function () {
+    return function (value, wordwise, max, tail) {
+        if (!value) return '';
+
+        max = parseInt(max, 10);
+        if (!max) return value;
+        if (value.length <= max) return value;
+
+        value = value.substr(0, max);
+        if (wordwise) {
+            var lastspace = value.lastIndexOf(' ');
+            if (lastspace != -1) {
+                value = value.substr(0, lastspace);
+            }
+        }
+
+        return value + (tail || '');
+    };
+})
+.filter('filterSection', function (version) {
+    return function(input,sectionId) {
+        if (sectionId==0)
+            return input
+        else {
+            var temp=[];
+            angular.forEach(input, function (item) {
+                if (item.category== sectionId) {
+                    temp.push(item);
+                }
+            });
+            return temp;
+        }
+    };
+});
+
+'use strict';
+
+/* Services */
+function findById(collection,id){
+    for (var i=0;i<collection.length;i++){
+        if (collection[i]._id==id){
+            return collection[i];
+            break;
+        }
+    }
+    return null;
+};
+
+// Demonstrate how to register services
+// In this case it is a simple value service.
+angular.module('myApp.services', []).
+     value('version', '0.1')
+    //http://michaeleconroy.blogspot.com/2013_09_01_archive.html
+    .factory('$global',['$http',function($http){
+        var _urls = {
+            country : '/api/getip/',
+            config : '/api/config/',
+            categories : '/api/category/',
+            user:'/api/users/me/'
+        }; // end urls
+        var _currency,
+            _country,
+            _config,
+            _categories;
+        var _user = null;
+        var _titles={};
+
+        return {
+            request : function(url,vars){
+                if(angular.isDefined(vars)){
+                    return $http.post(url,$.param(vars),{headers:{'Content-Type': 'application/x-www-form-urlencoded'}});
+                }else{
+                    return $http.get(url);
+                }
+            },
+
+            url : function(which){
+                return _urls[which];
+            }, // end url
+            setCurrency : function(data){
+                _currency = data;
+            },
+            getCarrency : function(){
+                return _currency;
+            },
+            setCongif : function(data){
+                _config = data;
+            },
+            getCongif : function(){
+                return _config;
+            },
+            setCountry : function(data){
+                if (data.country_code){
+                    _country = data.country_code;
+                    if (data.country_code=='RU' || data.country_code=='RUS'){
+                        _currency="RUB";
+                    } else if (data.country_code=='UA'){
+                        _currency="UAH";
+                    }
+                    else {
+                        _currency="USD";
+                    }
+                }
+           },
+            getCountry : function(){
+                return _country;
+            },
+            setCategories : function(data){
+                _categories = data;
+            },
+            getCategories : function(){
+                return _categories;
+            },
+            setUser : function(aUser){
+                if (!aUser._id && aUser.id) { aUser._id=aUser.id;}
+                if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
+                _user = aUser;;
+            },
+            getUser : function(){
+                return _user;
+            },
+            setTitles : function(data){
+                _titles = data;
+            },
+            getTitles : function(){
+                return _titles;
+            }
+        };
+
+
+    }]) // end $global
+
+    .factory('subjectSrv',['$global',function($global){
+        //-- Variables --//
+        var _send = $global.request;
+
+        //-- Methods --//
+        return {
+            subjects : function(){
+                return _send($global.url('subjects'));
+            }, // end subjects
+
+            course : function(abbr,num){
+                var url = $global.url('course');
+                if(angular.isDefined(abbr) && !(angular.equals(abbr,null) || angular.equals(abbr,'')))
+                    url += 'abbr/' + abbr + '/';
+
+                if(angular.isDefined(num) && !(angular.equals(num,null) || angular.equals(num,'')))
+                    url += 'num/' + num;
+
+                return _send(url);
+            }, // end course
+            categories:function(){
+                return _send($global.url('categories'));
+            },
+            country:function(){
+                return _send($global.url('country'));
+            },
+            config:function(){
+                return _send($global.url('config'));
+            },
+            user:function(){
+                return _send($global.url('user'));
+            }
+
+        };
+    }]) // end subjectSrv / module(myapp.services)
+
+
+
+    .factory('User', function ($resource) {
+        return $resource('/api/users/:id/:email', {
+            id: '@id'
+        }, { //parameters default
+            update: {
+                method: 'PUT',
+                params: {
+                    id:'profile',
+                    email:''
+                }
+            },
+            updatePswd: {
+                method: 'PUT',
+                params: {
+                    // id:'profile'
+                    id:'changepswd',
+                    email:''
+                }
+            },
+            resetPswd: {
+                method: 'POST',
+                params: {
+                    id:'resetpswd',
+                    email:'@email'
+                }
+            },
+            get: {
+                method: 'GET',
+                params: {
+                    id:'me',
+                    email:''
+                }
+            }
+        });
+    })
+    .factory('UserService',[function(){
+        var sdo={
+            isLogged:false
+        }
+        return sdo;
+    }])
+
+.factory('Session',['$resource', function ($resource) {
+        return $resource('/api/session/');
+    }])
+
+    .factory('Chat',['$resource', function($resource){
+        return $resource('/api/chat/:from/:to', {}, {
+            list: {method:'GET', isArray: true, params:{id:''}},
+            delete: {method:'DELETE',params: {}}
+            /*add: {method:'POST',params:{id:''}},
+            update: {method:'PUT',params: {id: ''}},
+            delete: {method:'DELETE',params: {id: '@_id'}},
+            get:{method:'GET', params: {id: '@id'}}*/
+        });
+    }])
+
+.factory('Auth',['$timeout', '$rootScope', 'Session', 'User', '$global',
+        function Auth($timeout, $rootScope, Session, User,$global) {
+
+        // Get currentUser from cookie
+       /* $rootScope.currentUser = $cookieStore.get('user') || null;
+        $cookieStore.remove('user');*/
+
+        //console.log($rootScope.currentUser);
+        var user={},that=this;
+        User.get(function(aUser){
+            if (!aUser._id && aUser.id) { aUser._id=aUser.id;}
+            if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
+            if (aUser._id){
+                user= aUser;
+                $timeout(function(){$rootScope.$broadcast('logged', user);},100)
+            }
+
+        });
+
+        return {
+
+            /**
+             * Authenticate user
+             *
+             * @param  {Object}   user     - login info
+             * @param  {Function} callback - optional
+             * @return {Promise}
+             */
+            login: function(userInfo, callback) {
+                var cb = callback || angular.noop;
+                return Session.save({
+                    email: userInfo.email,
+                    password: userInfo.password
+                }, function(aUser) {
+                    //setUser(aUser);
+                    if (!aUser._id && aUser.id) { aUser._id=aUser.id};
+                    if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
+                    user=aUser;
+                    $rootScope.$broadcast('logged', user);
+                    //console.log(that.user)
+                    return cb();
+                }, function(err) {
+                    return cb(err);
+                }).$promise;
+            },
+
+            /**
+             * Unauthenticate user
+             *
+             * @param  {Function} callback - optional
+             * @return {Promise}
+             */
+            logout: function(callback) {
+                var cb = callback || angular.noop;
+                return Session.delete(function() {
+                        user={};
+                        $rootScope.$broadcast('logout', user);
+                        return cb();
+                    },
+                    function(err) {
+                        return cb(err);
+                    }).$promise;
+            },
+
+            /**
+             * Create a new user
+             *
+             * @param  {Object}   user     - user info
+             * @param  {Function} callback - optional
+             * @return {Promise}
+             */
+            createUser: function(userInfo, callback) {
+                var cb = callback || angular.noop;
+               return User.save(userInfo,
+                    function(aUser) {
+                        if (!aUser._id && aUser.id) { aUser._id=aUser.id;}
+                        if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
+                        user=aUser;
+                        $rootScope.$broadcast('logged', user);
+                        return cb();
+                        // авторизация сразу после регистрации
+                        /*Session.save({
+                            email: userInfo.email,
+                            password: userInfo.password
+                        },function(aUser){
+                            if (!aUser._id && aUser.id) { aUser._id=aUser.id;}
+                            if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
+                            user=aUser;
+                            return cb();
+                        })*/
+
+                    },
+                    function(err) {
+                        return cb(err);
+                    }).$promise;
+            },
+
+            /**
+             * Change password
+             *
+             * @param  {String}   oldPassword
+             * @param  {String}   newPassword
+             * @param  {Function} callback    - optional
+             * @return {Promise}
+             */
+            changePassword: function(oldPassword, newPassword, callback) {
+                var cb = callback || angular.noop;
+
+                return User.updatePswd({
+                    oldPassword: oldPassword,
+                    newPassword: newPassword
+                }, function(aUser) {
+                    return cb(aUser);
+                }, function(err) {
+                    return cb(err);
+                }).$promise;
+            },
+            resetPswd: function( email,callback) {
+                var cb = callback || angular.noop;
+                return User.resetPswd(email, function(aUser) {
+                    return cb(aUser);
+                }, function(err) {
+                    return cb(err);
+                }).$promise;
+            },
+
+            /**
+             * Gets all available info on authenticated user
+             *
+             * @return {Object} user
+             */
+            currentUser: function() {
+                return user;
+            },
+
+            setUserProfile :function(profile){
+                user.profile=profile;
+            },
+
+            /**
+             * Simple check to see if a user is logged in
+             *
+             * @return {Boolean}
+             */
+            isLoggedIn: function(){
+                //console.log(user.id);
+                return(user && user.id)? user : false;
+            }
+        };
+    }])
+
+    .factory('Config',['$resource', function ($resource) {
+        return $resource('/api/config');
+    }])
+
+    .factory('Filters',['$resource', function($resource){
+        return $resource('/api/filters/:id', {}, {
+            list: {method:'GET', isArray: true, params:{id:''}},
+            add: {method:'POST',params:{id:''}},
+            update: {method:'PUT',params: {id: ''}},
+            delete: {method:'DELETE',params: {id: '@_id'}},
+            get:{method:'GET', params: {id: '@id'}}
+        });
+    }])
+    .factory('Tags',['$resource', function($resource){
+        return $resource('/api/tag/:filter/:id', {}, {
+            list: {method:'GET', isArray: true, params:{filter:'@filter',id:''}},
+            add: {method:'POST',params:{filter:'@filter',id:''}},
+            update: {method:'PUT',params: {filter:'@filter',id: ''}},
+            delete: {method:'DELETE',params: {filter:'@filter',id: '@_id'}},
+            get:{method:'GET', params: {filter:'filter',id: '@id'}}
+        });
+    }])
+
+    .factory('BrandTags',['$resource', function($resource){
+        return $resource('/api/brandtags/:brand/:id', {}, {
+            list: {method:'GET', isArray: true, params:{brand:'@brand',id:''}},
+            add: {method:'POST',params:{brand:'',id:''}},
+            update: {method:'PUT',params: {brand:'',id: ''}},
+            delete: {method:'DELETE',params: {brand:'@brand',id: '@_id'}},
+            get:{method:'GET', params: {brand:'brand',id: '@_id'}}
+        });
+    }])
+
+    .factory('Brands',['$resource', function($resource){
+        return $resource('/api/brand/:_id', {}, {
+            list: {method:'GET', isArray: true, params:{_id:''}},
+            add: {method:'POST',params:{_id:''}},
+            update: {method:'PUT',params: {_id: ''}},
+            delete: {method:'DELETE',params: {_id: '@_id'}},
+            get:{method:'GET', params: {_id: '@_id'}}
+        });
+    }])
+
+    .factory('BrandTags',['$resource', function($resource){
+        return $resource('/api/brandtags/:brand/:id', {}, {
+            list: {method:'GET', isArray: true, params:{brand:'@brand',id:''}},
+            add: {method:'POST',params:{brand:'',id:''}},
+            update: {method:'PUT',params: {brand:'',id: ''}},
+            delete: {method:'DELETE',params: {brand:'@brand',id: '@_id'}},
+            get:{method:'GET', params: {brand:'brand',id: '@_id'}}
+        });
+    }])
+    .factory('Category',['$resource', function($resource){
+        return $resource('/api/category/:_id', {}, {
+            list: {method:'GET', isArray: true, params:{_id:''}},
+            add: {method:'POST',params:{_id:''}},
+            update: {method:'PUT',params: {_id: ''}},
+            delete: {method:'DELETE',params: {_id: '@_id'}},
+            get:{method:'GET', params: {_id: '@_id'}}
+        });
+    }])
+
+    .factory('Comment',['$resource', function($resource){
+        return $resource('/api/commentStuff/:stuff/:_id', {}, {
+            list: {method:'GET', isArray: true, params:{stuff:"@stuff",_id:''}},
+            add: {method:'POST',params:{stuff:"",_id:''}},
+            update: {method:'PUT',params: {stuff:"",_id: ''}},
+            delete: {method:'DELETE',params: {stuff:"",_id: '@_id'}},
+            get:{method:'GET', params: {stuff:"stuff",_id: '@_id'}}
+        });
+    }])
+
+    .factory('Stuff',['$resource', function($resource){
+        return $resource('/api/stuff/:category/:brand/:id', {}, {
+            list: {method:'GET', isArray: true, params:{category:'@category',brand:'@brand',id:''}},
+            add: {method:'POST',params:{category:'category',brand:'brand',id:''}},
+            update: {method:'PUT',params: {category:'category',brand:'brand',id:''}},
+            updateGallery: {method:'PUT',params: {category:'category',brand:'brand',id:'gallery'}},
+            delete: {method:'DELETE',params: {category:'category',brand:'brand',id:'@_id'}},
+            get:{method:'GET', params: {category:'category',brand:'brand',id:'@_id'}},
+            full:{method:'GET', params: {category:'category',brand:'brand',id:'@_id'}}
+        });
+    }])
+
+    .factory('Country',['$resource', function($resource){
+        return $resource('/api/country/:id', {}, {
+            list: {method:'GET', isArray: true, params:{id:''}},
+            add: {method:'POST',params:{id:''}},
+            update: {method:'PUT',params: {id: ''}},
+            delete: {method:'DELETE',params: {id: '@_id'}},
+            get:{method:'GET', params: {id: '@_id'}}
+        });
+    }])
+    .factory('Region',['$resource', function($resource){
+        return $resource('/api/region/:country/:id', {}, {
+            list: {method:'GET', isArray: true, params:{country:'@country',id:''}},
+            add: {method:'POST',params:{country:'country',id:''}},
+            update: {method:'PUT',params: {country:'country',id: ''}},
+            delete: {method:'DELETE',params: {country:'country',id: '@_id'}},
+            get:{method:'GET', params: {country:'country',id: '@_id'}}
+        });
+    }])
+    .factory('City',['$resource', function($resource){
+        return $resource('/api/city/:region/:id', {}, {
+            list: {method:'GET', isArray: true, params:{region:'@region',id:''}},
+            add: {method:'POST',params:{region:'region',id:''}},
+            update: {method:'PUT',params: {region:'region',id: ''}},
+            delete: {method:'DELETE',params: {region:'region',id: '@_id'}},
+            get:{method:'GET', params: {region:'region',id: '@_id'}}
+        });
+    }])
+
+    .factory('Orders',['$resource', function($resource){
+        return $resource('/api/order/:id', {}, {
+            list: {method:'GET', isArray: true, params:{id:''}},
+            add: {method:'POST',params:{id:''}},
+            update: {method:'PUT',params: {id: ''}},
+            delete: {method:'DELETE',params: {id: '@_id'}},
+            get:{method:'GET', params: {id: '@_id'}}
+        });
+    }])
+
+    .factory('News',['$resource', function($resource){
+        return $resource('/api/news/:id', {}, {
+            list: {method:'GET', isArray: true, params:{id:''}},
+            add: {method:'POST',params:{id:''}},
+            update: {method:'PUT',params: {id:''}},
+            updateGallery: {method:'PUT',params: {id:'gallery'}},
+            delete: {method:'DELETE',params: {id:'@_id'}},
+            get:{method:'GET', params: {id:'@_id'}}
+            //full:{method:'GET', params: {id:'@_id'}},
+        });
+    }])
+
+
+
+    .factory('Stat',['$resource', function($resource){
+        return $resource('/api/stat/:id', {}, {
+            list: {method:'GET', isArray: true, params:{id:''}},
+            add: {method:'POST',params:{id:''}},
+            update: {method:'PUT',params: {id:''}},
+            delete: {method:'DELETE',params: {id:'@_id'}},
+            get:{method:'GET', params: {id:'@_id'}},
+        });
+    }])
+
+    .factory('CartLocal',['localStorage','$http','$rootScope','$filter','$timeout','$location', function(localStorage,$http,$rootScope,$filter,$timeout,$location){
+        var self = this;
+        self.sum;
+        self.quantity;
+        //console.log('dddd');
+        var cartItems = [];
+        var cartItems = localStorage.get('cart');
+
+
+        var cartComment='';
+
+        var sendOrder= true;
+        var items = cartCount();
+        //console.log(items);
+
+        var divider = 1;
+
+        function list(){
+            return cartItems;
+        }
+        function cartCount(){
+            var i=0;
+            cartItems.forEach(function(item){
+                //console.log(item.quantity);
+                if(item.quantity)
+                    i +=Number(item.quantity);
+            })
+            return i;
+        }
+
+        function getCount(itemTo){
+            //console.log('ss');
+            var count = 1;
+            cartItems.forEach(function(current){
+                if (current.size == itemTo.size && current.stuff == itemTo.stuff && current.color == itemTo.color){
+                    count = current.quantity;
+                }
+            })
+            return count;
+        }
+
+        function addToCart(itemTo){
+            //console.log(itemTo);
+            var itemFound = false;
+
+            cartItems.forEach(function(current){
+                //console.log(current);
+
+                if (current.size == itemTo.size && current.stuff == itemTo.stuff && current.color == itemTo.color){
+                    current.quantity = itemTo.quantity;
+                    //console.log(current.quantity);
+                    itemFound=true;
+                }
+            });
+
+            if (!itemFound){
+                //item.quantity;
+                var itemToCart= new Object;
+                itemToCart = JSON.parse(JSON.stringify(itemTo));
+
+                cartItems.push(itemToCart);
+            }
+
+            localStorage.set('cart', cartItems);
+            localStorage.set('cart-count',items);
+            //$rootScope.itemsOnCart = items;
+        };
+
+        function getItem(i){
+            return cartItems[i];
+        }
+        function getItems(){
+            return cartItems;
+        }
+
+        function save(){
+            localStorage.set('cart', cartItems);
+        }
+
+
+        function getTotalSum(){
+
+            var sum=0;
+            var i = cartCount();
+            cartItems.forEach(function(c){
+                var q = (i>=5)? c.price: c.retail;
+                sum += q * c.quantity;
+            });
+            //console.log(grandTotal);
+            return sum;
+
+        }
+
+        /*function getSum(current){
+
+            var i;
+
+            if  (current.price){
+                i=Number(current.new_price);
+            } else{
+                i=Number(current.price);
+            }
+
+            return i * Number(current.quantity);
+
+        }*/
+
+
+        function clearCart(){
+            //console.log('ssss');
+            cartItems = [];
+            save();
+
+
+        }
+
+
+        function removeItem(i){
+            cartItems.splice(i,1);
+            save();
+        }
+
+
+        function send(arg,callback){
+            //console.log($rootScope)
+            var lang=arg.lang,
+                comment =arg.comment,
+                kurs=arg.kurs,
+                currency=arg.currency,
+                profile=arg.profile,
+                shipper=arg.shipper,
+                shipperOffice=arg.shipperOffice;
+           /* self.quantity=cartCount();
+            self.sum:*/
+            //var ss = $rootScope.user.profile.country.toLowerCase();
+            //var country = (ss=='украина' || ss=="україна")?'UA':"ELSE";
+            var country =profile.countryId;
+            var order={
+                'cart':cartItems,
+                'comment':comment,
+                'lang':lang,
+                'user':$rootScope.user._id,
+                'quantity':cartCount(),
+                'sum':getTotalSum(),
+                'kurs':kurs,
+                'currency':currency,
+                //'address':profile.address,
+                fio:profile.fio,
+                country:country,
+                profile:profile,
+                shipper:shipper,
+                shipperOffice:shipperOffice
+            }
+            //console.log(order);return;
+            $http.post('/api/order',order).then(
+                function (resp) {
+                    console.log(resp.data);
+                    callback(false,resp.data);
+                    /*if (resp.data.done){
+                        *//*cartItems = [];
+                        save();*//*
+                        callback(false,resp.data);
+                    } else {
+                        callback(resp.data.err);
+                    }*/
+                },
+                function(err){
+                    callback(err.data);
+                })
+
+
+        };
+
+
+
+
+        return{
+            addToCart:addToCart,
+            list:list,
+            cartCount:cartCount,
+            getCount : getCount,
+            getItem:getItem,
+            getItems:getItems,
+            getTotalSum:getTotalSum,
+            save:save,
+            clearCart:clearCart,
+            removeItem:removeItem,
+            send:send
+        }
+    }])
+
+    .factory('localStorage', function(){
+        var APP_ID =  'fraim-local-storage';
+
+        // api exposure
+        return {
+            // return item value
+            getB: function(item){
+
+                return JSON.parse(localStorage.getItem(item) || 'false');
+            },
+            // return item value
+            getN: function(item){
+                var i = localStorage.getItem(item);
+                if (i!='undefined'){
+                    return JSON.parse(i)
+                }
+                else
+                    return '';
+            },
+            // return item value
+            get: function(item){
+                return JSON.parse(localStorage.getItem(item) || '[]');
+            },
+            set: function(item, value){
+                // set item value
+                localStorage.setItem(item, JSON.stringify(value));
+            }
+
+        };
+
+    })
+
+
+    .factory('socket', function (socketFactory) {
+        return socketFactory();
+    })
+
+    .provider('chats', function () {
+
+       return {
+           world: 'World',
+           listUsers : [],
+           activeChat:{},
+           chatList :[],
+
+            $get: function(socket,Chat,$rootScope,$timeout) {
+
+                var that=this;
+                var msgs =[];
+                //activeChat={};
+                //var chatList =[];
+                    //listUsers=[];
+
+                function clearArray(A){
+                    while(A.length > 0) {
+                        A.pop();
+                    }
+                }
+
+
+
+                function refreshLists(user,logout){
+                    //console.log(user);
+                    clearArray(that.chatList);
+                    clearArray(that.listUsers);
+                    if (logout) return;
+                    if (!that.activeChat['_id'] || !enter){
+                        that.activeChat['_id']='';
+                        that.activeChat['name']='';
+                        that.activeChat['more']=false;
+                        that.activeChat['page']=1;
+                    }
+
+
+                    Chat.list({from:user._id},function(res){
+                        //console.log(res);
+                        for (var i= 0,l=res.length;i<l;i++){
+                            that.chatList.push(res[i]);
+                        }
+                    });
+                    if (user.role=='admin'){
+                        Chat.list(function(res){
+                            //console.log(res);
+                            for (var i= 0,l=res.length;i<l;i++){
+                                that.listUsers.push(res[i]);
+                            }
+
+                        })
+
+                    }
+                }
+
+                /*function changeUser(enter){
+                    refreshLists(enter)
+                    if (enter){
+                        socket.emit('new user in chat',$rootScope.user._id);
+                    } else {
+                        socket.emit('delete user from chat');
+                    }
+                }*/
+
+
+
+                socket.on('who are you',function(cb){
+                    //console.log('who are you');
+                    var id = ($rootScope.user&&$rootScope.user._id)?$rootScope.user._id:'user not auth';
+                    //console.log(id);
+                    cb(id);
+                })
+
+               socket.on('new:msg',function(data,cb){
+
+                   //console.log(data);
+                   var from= data.from;
+                   var to= data.to;
+                   var status=true;
+                   if (from!=$rootScope.user._id){
+                       $.playSound('sounds/chat');
+                   }
+                   //console.log("$rootScope.$state.includes('language.chat') = "+$rootScope.$state.includes('language.chat'));
+                    if ($rootScope.$state.includes('language.chat')){
+                        if (to==that.activeChat._id || from==that.activeChat._id){
+
+                           if (from==$rootScope.user._id){
+                                var name =$rootScope.user.name;
+                                var clas=true;
+                                var item= to;
+                            } else{
+                                var name =that.activeChat.name;
+                                var clas=false;
+                                var item= from;
+                            }
+                            msgs[msgs.length]={name:name,msg:data.msg,date:data.date,class:clas,delete:false,_id:data._id};
+                            //console.log({name:name,msg:data.msg,date:data.date,class:clas,delete:false,_id:data._id});
+                        } else  {
+                            status=false;
+                        }
+                        cb({cb:'cb from chat controller have read',status:status});
+                    } else{
+                        status=false;
+                        cb({cb:"from mainFraim don't read",status:false});
+                    }
+                   //console.log(status);
+                   if (!status && from==$rootScope.user._id  && !_.findWhere(that.chatList, {_id: data.to})){
+                      // console.log('refreshList');
+                       refreshLists(true);
+                   }
+                   if (!status && from!=$rootScope.user._id){ // not read
+                       //console.log('ssssss');
+                       if (_.findWhere(that.chatList, {_id: data.from})){
+                           _.findWhere(that.chatList, {_id: data.from}).newMsg++;
+                       } else { // there is not chat
+                           refreshLists(true,function(){
+                               /*console.log('add in chatList');
+                               _.findWhere(that.chatList, {_id: data.from}).newMsg++;*/
+                           });
+
+                       }
+                   }
+
+                })
+
+
+                function changeChat(chat,cb){
+                    clearArray(msgs);
+
+                    that.activeChat['_id']=chat._id;
+                    that.activeChat['name']=chat.name;
+                    that.activeChat['more']=false;
+                    that.activeChat['page']=1;
+
+
+                    _.findWhere(that.chatList, {_id: chat._id}).newMsg=0; // ????
+
+                    Chat.list({from:$rootScope.user._id,to:that.activeChat._id,page:that.activeChat['page']},function(res){
+                        //console.log(res);
+                        var arr=[];
+                        if (res[0]){
+                            that.activeChat['more']=res[0].more;
+                            _.findWhere(that.chatList, {_id: chat._id}).newMsg=res[0].newMsg;
+                        }
+
+                        //console.log(res[0]);
+                        res.forEach(function(el){
+                            if (el.user==that.activeChat._id){
+                                el.name=that.activeChat.name;
+                                el.class=false;
+                            }else{
+                                el.class=true;
+                                el.name=$rootScope.user.name;
+                            }
+                            el.date=el.created;
+                            el.delete=false;
+                            msgs[msgs.length]=el;
+                            //console.log(msgs);
+                        })
+                        //console.log(msgs);
+
+                        if (cb){
+                            cb(arr)
+                        }
+
+                        //console.log(msgs[chat._id].length);
+                        //massages=$scope.msgs[chat._id];msgs[chat._id]
+                    });
+                }
+
+                function moreMsgs(){
+                    that.activeChat['page']++;
+                    Chat.list({from:$rootScope.user._id,to:that.activeChat._id,page:that.activeChat['page'],last:msgs[0]._id},function(res){
+                        var arr=[];
+                        if (res[0]){
+                            that.activeChat['more']=res[0].more;
+                            _.findWhere(that.chatList, {_id: that.activeChat._id}).newMsg=res[0].newMsg;
+                        }
+                        res.forEach(function(el){
+                            if (el.user==that.activeChat._id){
+                                el.name=that.activeChat.name;
+                                el.class=false;
+                            }else{
+                                el.class=true;
+                                el.name=$rootScope.user.name;
+                            }
+                            el.date=el.created;
+                            arr.push(el);
+                        })
+                        //console.log(arr);
+                        for(var i=arr.length-1;i>=0;i--){
+                            msgs.unshift(arr[i]);
+                        }
+                    });
+
+                }
+
+
+                function sendMsg(msg,cb){
+                    socket.emit('new:msg',{from:$rootScope.user._id,to:that.activeChat._id,msg:msg});
+                    cb();
+                }
+
+                function getMsgs(){
+                    if (that.activeChat._id){
+                        return msgs;
+                    } else {
+                        return  [];
+                    }
+                }
+                /*function getlistUsers(){
+                    return that.listUsers;
+                }
+                function getchatList(){
+                    return chatList;
+                }*/
+                function addChat(user){
+                    //console.log(user);
+                    if(_.findWhere(that.chatList, {_id: user._id})){
+                        //console.log('is chat');
+                        _.findWhere(that.chatList, {_id: user._id}).newMsg=0;
+                    } else {
+                        user.newMsg=0;
+                        that.chatList.push(user);
+                    }
+
+
+                }
+                function updateListMsgs(to,from){
+                    socket.emit('updateListMsgs',{to:to,from:from});
+                }
+
+
+                return {
+                    sendMsg:sendMsg,
+                    changeChat:changeChat,
+                    listUsers:that.listUsers,
+                   // listUsers1:listUsers,
+                    world:this.world,
+                    msqs:getMsgs,
+                    chatList:that.chatList,
+                    addChat:addChat,
+                    activeChat:that.activeChat,
+                    moreMsgs:moreMsgs,
+                    updateListMsgs:updateListMsgs,
+                    //changeUser:changeUser,
+                    refreshLists:refreshLists
+                }
+            }
+       }
+
+
+    })
+
