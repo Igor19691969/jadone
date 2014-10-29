@@ -43,7 +43,7 @@
                                     <!--<a ng-click="setSortProperty('price')">
                                         Цена
                                     </a>-->
-                                    цена&nbsp{{currency}}
+                                    цена&nbsp{{currency.val}}
                                 </th>
 
                                 <th  class="center" title="сортировать по количеству">
@@ -83,7 +83,7 @@
                                 <td class="col-lg-1">
 
                                     <!--{{divider*good.price*curren[curren.current][0]| currency:curren[curren.current][2]}}-->
-                                    {{(kurs*(price =(cart.cartCount()>=5)?good.price:good.retail)).toFixed(2)}}
+                                    {{(rate.val*(price =(cart.cartCount()>=5)?good.price:good.retail)).toFixed(2)}}
 
                                 </td>
                                 <td class="col-lg-2">
@@ -109,7 +109,7 @@
                                     <!--<input value="1" style="width: 30px;">-->
                                 </td>
                                 <td class="col-lg-2">
-                                   {{(kurs*price*good.quantity).toFixed(2)}}&nbsp{{currency}}
+                                   {{(rate.val*price*good.quantity).toFixed(2)}}&nbsp{{currency.val}}
                                 </td>
                                 <td  class="col-lg-1 cart-item-center" ng-click="cart.removeItem($index)">
                                     <i class="glyphicon glyphicon-remove cursor_pointer"></i>
@@ -122,7 +122,7 @@
                                     <td>Итого</td>
                                     <td></td><td></td><td></td><td></td>
                                     <td style="text-align: center;">{{cart.quantity=cart.cartCount()}}</td>
-                                    <td>{{(kurs*(cart.sum=cart.getTotalSum())).toFixed(2)}}&nbsp{{currency}}</td>
+                                    <td>{{(rate.val*(cart.sum=cart.getTotalSum())).toFixed(2)}}&nbsp{{currency.val}}</td>
                                     <td></td>
                                 </tr>
                         </tbody>
@@ -243,8 +243,8 @@
                                             <div class="form-group" ng-class="{ 'has-success': formLogin.emailLogin.$valid && submittedLogin,
                                                   'has-error': formLogin.emailLogin.$invalid && submittedLogin }">
 
-                                                <label class="col-lg-4 control-label" style=" margin-top: 10px;">e-mail</label>
-                                                <div class="col-lg-8 ">
+                                                <label  class="col-lg-4 control-label" style=" margin-top: 10px;">e-mail</label>
+                                                <div class="col-lg-8 " >
                                                     <input type="email" name="emailLogin" class="form-control" ng-model="user.emailLogin" set-model required  mongoose-error/>
                                                 <span class="help-block" ng-show="formLogin.emailLogin.$error.email && submittedLogin">
                                                     <!--Doesn't look like a valid email.-->
@@ -282,6 +282,22 @@
                                                 </span>
                                                 </div>
                                             </div>
+
+                                            <div class="form-group" ng-class="{ 'has-success': formLogin.nameLogin.$valid && submittedLogin,
+                                                  'has-error': formLogin.nameLogin.$invalid && submittedLogin }">
+                                                <label  class="col-lg-4 control-label" style=" margin-top: 10px;">телефон</label>
+                                                <div class="col-lg-8 ">
+                                                    <span class="promt">необязательно для заполения</span>
+                                                    <input type="text" name="nameLogin" class="form-control" ng-model="user.nameLogin" set-model   mongoose-error/>
+                                                <span class="help-block" ng-show="formLogin.nameLogin.$error.required && submittedLogin">
+                                                    введите номер телефона
+                                                </span>
+                                                <span class="help-block" ng-show="formLogin.nameLogin.$error.mongoose">
+                                                    {{ errors.nameLogin }}
+                                                </span>
+                                                </div>
+                                            </div>
+
                                             <div class="clearfix"></div>
 
 

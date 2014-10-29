@@ -6,6 +6,7 @@ html(ng-app="myApp")
     title(ng-bind="titles.pageTitle")
     meta(name="keywords",content="{{titles.pageKeyWords}}")
     meta(name="description",content="{{titles.pageDescription}}")
+    link(rel="image_src",href="{{titles.image}}")
     meta(name="author",content="Your name")
     meta(name="fragment",content="!")
     meta(name="viewport",content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no")
@@ -22,6 +23,11 @@ html(ng-app="myApp")
     link(rel='stylesheet', href='/styles/slide.css')
     link(rel='stylesheet', href='/styles/dialogs.css')
 
+    script.
+      _atrk_opts = { atrk_acct:"UnSek1acFH002u", domain:"jadone.biz",dynamic: true};
+      (function() { var as = document.createElement('script'); as.type = 'text/javascript'; as.async = true; as.src = "https://d31qbv1cthcecs.cloudfront.net/atrk.js"; var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(as, s); })();
+    noscript
+      img(src="https://d5nxst8fruw4z.cloudfront.net/atrk.gif?account=UnSek1acFH002u",style="display:none",height="1",width="1")
 
   body
     block body

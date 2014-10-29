@@ -1326,6 +1326,13 @@ angular.module('myApp.controllers', [])
 
     .controller('editStuffCtrl', ['$scope','Brands','$rootScope','Category','Filters','Stuff','$timeout','$fileUpload','BrandTags',
         function ($scope,Brands,$rootScope,Category,Filters,Stuff,$timeout,$fileUpload,BrandTags) {
+            $scope.groupSetup = {
+                multiple: true,
+                formatSearching: 'Searching the group...',
+                formatNoMatches: 'Не найдено',
+                width: '100%'
+            };
+
             $scope.filterListEdit=[];
             $scope.stuff={};
             $scope.stuff.name={"ru":'',"ua":'',"en":''};
@@ -2381,9 +2388,76 @@ angular.module('myApp.controllers', [])
         }])
 
 
-.controller('ordersCtrl', ['$scope','$rootScope','Orders','$stateParams','$timeout',
-    function ($scope,$rootScope,Orders,$stateParams,$timeout) {
-        console.log('ordersCtrl');
+.controller('ordersCtrl', ['$scope','$rootScope','Orders','$stateParams','$timeout','$modal','$http',
+    function ($scope,$rootScope,Orders,$stateParams,$timeout,$modal,$http) {
+
+        //**************** установка даты поставки**********************
+        $scope.dt  = new Date();
+        $scope.today = function(t) {
+            if (t)
+                return $scope.dt.setHours(0,0,0);
+            else
+                return $scope.dt.setHours(23,59,59);
+        };
+        $scope.dtto = $scope.today();
+
+        var now = new Date().getTime();
+
+        $scope.clear = function () {
+            $scope.dtto= $scope.dtfrom= null;
+        };
+
+        $scope.opento = function($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+
+            $scope.opened = true;
+            console.log($scope.opened)
+        };
+
+        $scope.dateOptions = {
+            formatYear: 'yy',
+            startingDay: 1
+        };
+
+        //$scope.initDate = new Date('2016-15-20');
+        $scope.formats = ['dd-MMMM-yyyy', 'yyyy/MM/dd', 'dd.MM.yyyy', 'shortDate'];
+        $scope.format = $scope.formats[0];
+
+        $scope.checkDate=function(dateOfShip){
+            if (!dateOfShip){
+                return false
+            } else {
+                if ((Date.parse(dateOfShip)-now)<0){
+                    return true;
+                } else return false;
+                //console.log(moment(moment.duration(now.diff(dateOfShip))).format())
+            }
+
+        }
+        $scope.checkDate1=function(dateOfShip,fio){
+            if (!dateOfShip){
+                return false
+            } else {
+                var dt=Date.parse(dateOfShip)
+                var pochti = now+(24*60*60*1000);
+                if (fio=='Чугуров Игорь'){
+                    console.log(dt);
+                    console.log(pochti);
+                    console.log(now);
+                }
+
+                if ((dt-now)>0 &&(dt-pochti)<0){
+                    return true;
+                } else return false;
+                //console.log(moment(moment.duration(now.diff(dateOfShip))).format())
+            }
+
+        }
+        //**************************************************************
+
+
+        //console.log('ordersCtrl');
         $scope.changeStatus=false;
 
         $scope.paginate={page:0,row:0,totalItems:0}
@@ -2431,6 +2505,15 @@ angular.module('myApp.controllers', [])
             }
             return sum;
         }
+        $scope.orderQuantityInStock= function(order,q){
+            var q=0;
+            for (var i= 0,l=order.cart.length;i<l;i++){
+                q +=(order.cart[i].onStock)?order.cart[i].onStock*1:0;
+            }
+            return q;
+        }
+
+
 
         $scope.afterSave = function(){
             $scope.orders=Orders.list({retail: $scope.retail,perPage:$scope.paginate.row , page:$scope.paginate.page},function(res){
@@ -2440,15 +2523,26 @@ angular.module('myApp.controllers', [])
                 $scope.changeStatus=false;
             })
         };
+        $scope.invoice = function(order){
+            order.invoice= new Date().getTime();
+            order.$update({invoice:order.invoice},function(res){
+                //if (err) console.log(err);
+                $scope.afterSave();
+            });
+        }
 
         $scope.updateOrder =  function(order,comments){
+            if (order.dateOfShip){
+                order.dateOfShip= new Date(order.dateOfShip)
+            }
+
             $scope.changeStatus=true;
             var comment=null;
             if(comments){
                 comment={comments:'comments'}
             }
-            order.$update(comment,function(err){
-                if (err) console.log(err);
+            order.$update(comment,function(res){
+                //if (err) console.log(err);
                 $scope.afterSave();
             });
         }
@@ -2527,6 +2621,179 @@ angular.module('myApp.controllers', [])
             order.cart.splice(i,1)
         }
 
+
+
+        $scope.openModal = function (order,size) {
+
+            var modalInstance = $modal.open({
+                templateUrl: 'myModalContent.html',
+                controller: ModalInstanceCtrl,
+                size: size,
+                windowClass:'xx-dialog',
+                resolve: {
+                    filterTags: function () {
+                        return $http.get('api/tag/all');
+                     }
+                 }
+            });
+
+            modalInstance.result.then(function (stuff) {
+                //$scope.selected = selectedItem;
+                //console.log(stuff);
+                order.cart.unshift(stuff)
+
+            }, function () {
+                console.log('Modal dismissed at: ' + new Date());
+                $scope.displayShip=false;
+            });
+        };
+        var ModalInstanceCtrl = function ($scope, $modalInstance,$resource,filterTags) {
+          //**** модальное окно для добавления товара
+            //paginator  *********************************************
+            $scope.paginate={page:0,row:0,totalItems:0}
+            $scope.$watch('paginate.row',function(n,o){
+                if (!n) return;
+                if ($scope.paginate.page>0){
+                    $scope.paginate.page=0;
+                } else {
+                    $scope.afterSave();
+                }
+
+            });
+            $scope.$watch('paginate.page',function(n,o){
+                if ($scope.paginate.row==0){
+                    return;
+                } else {
+                    $scope.afterSave();
+                }
+            });
+            function getTagName(arr,id){
+                //console.log(arr);
+                for (var i= 0,l=arr.length;i<l;i++){
+                    if (arr[i]._id==id){
+                        //console.log(arr[i].name['ru']);
+                        return arr[i].name['ru'];
+                        break;
+                    }
+                }
+                return '';
+            }
+            function getImg(gallery,color){
+                var img={index:1001,thumb:''};
+                gallery.forEach(function(photo){
+                    if(photo.tag && photo.tag._id==color && photo.index<img.index){
+                        img={index:photo.index,thumb:photo.thumb}
+                    }
+                })
+                return img.thumb;
+            }
+
+            $scope.afterSave = function(){
+                if (!$scope.q.category) return;
+
+                Stuff.query({category:$scope.q.category,page:$scope.paginate.page,perPage:$scope.paginate.row},function(res){
+                    if ($scope.paginate.page==0 && res.length>0){
+                        $scope.paginate.totalItems=res.shift().index;
+                    }
+                    $scope.stuffList=[];
+                    res.forEach(function(stuff){
+                        var temp = JSON.parse(stuff.stock);
+                        for(var color in temp){
+                            /*console.log(stuff.stock);
+                            console.log(color);
+                            console.log(stuff.stock[color]); break;return;*/
+                            for(var size in temp[color]){
+
+                                if(!temp[color][size]){
+                                    $scope.stuffList[$scope.stuffList.length]={
+                                        colorName:getTagName(filterTags.data,color),
+                                        color:color,
+                                        size:size,
+                                        sizeName:getTagName(filterTags.data,size),
+                                        category:$scope.q.category,
+                                        categoryName:getTagName($scope.categories['535f69c5377721f019fef375'],$scope.q.category),
+                                        stuff:stuff._id,
+                                        name:stuff.name['ru'],
+                                        quantity:1,
+                                        img:getImg(stuff.gallery,color),
+                                        price:stuff.price,
+                                        retail:stuff.retail
+                                    }
+                                    //console.log($scope.stuffList[$scope.stuffList.length-1]);
+                                }
+                            }
+                        }
+                    })
+
+                    $scope.stuffs=$scope.stuffList;
+                })
+            }
+
+
+
+            //paginator  *********************************************
+          $scope.focusInput=true;
+            $scope.q={},$scope.q.category='';
+            $scope.category=$scope.q.category;
+            $scope.sections=[];
+            $scope.categories={};
+            var Category=$resource('/api/category/:id', {id:'@id'});
+            Category.query(function(res){
+                $scope.paginate.page=0;
+                for (var i=0,l=res.length;i<l;i++){
+                    if(!res[i].section){
+                        $scope.sections[$scope.sections.length]=res[i];
+                    } else {
+                        if (!$scope.categories[res[i].section]){
+                            $scope.categories[res[i].section]=[];
+                        }
+                        $scope.categories[res[i].section][$scope.categories[res[i].section].length]=res[i];
+                    }
+                }
+                /*console.log($scope.sections.length);
+                 console.log($scope.categories[$scope.sections[0]._id].length);*/
+
+                //console.log(res);
+                //console.log($scope.categories);
+                //$scope.category=$scope.categories[$scope.sections[0]._id][0]._id;;
+            })
+            var Stuff=$resource('/api/stuff/:category/:brand/:id', {category:'@category',brand:0,id:''});
+
+            $scope.changeCategory= function(n,o){
+                $scope.afterSave();
+            }
+            /*$scope.insertStuff=function(stuff){
+                var is=false;
+                for (var i=0,l=$scope.item.stuffs.length;i<l;i++){
+                    if ($scope.item.stuffs[i]._id==stuff._id){
+                        is=true;
+                        break;
+                    }
+                }
+                if(!is){
+                    $scope.item.stuffs[$scope.item.stuffs.length]=stuff;
+                }
+            }*/
+
+
+
+
+
+
+
+            $scope.cancel = function () {
+                $modalInstance.dismiss('cancel');
+
+
+            };
+            $scope.addStuff = function (stuff) {
+                //console.log(stuff);
+                $modalInstance.close(stuff);
+
+
+            };
+        };
+
        /* $scope.updateOrder = function(order){
             order.$update();
         }*/
@@ -2550,11 +2817,12 @@ angular.module('myApp.controllers', [])
                 //var index = i+1;
                 k++;
                 var price=(order.quantity>=5)?good.price:good.retail;
+                var stock=(good.onStock)?good.onStock:'';
                 s +='<tr><td>'+k+'</td><td>'+good.name+' '+good.colorName+'</td><td>'+(good.artikul || '' )+'</td><td class="text-center">'+
                     good.sizeName+'</td><td>'+(order.kurs*price).toFixed(2)+' '+order.currency+
                     '</td><td class="text-center">'+good.quantity+'</td>'+
                     '<td>'+ (order.kurs*price*good.quantity).toFixed(2)+' '+order.currency+
-                    '</td> <td>'+good.onStock+'</td></tr>';
+                    '</td> <td>'+stock+'</td></tr>';
 
             }
             for (var i=0,len=order.addInCart.length;i<len;i++){
@@ -2614,9 +2882,9 @@ angular.module('myApp.controllers', [])
             }*/
 
 
-            $timeout(function () {
+           /* $timeout(function () {
                 popupWin.print();
-            });
+            });*/
             //Chrome's versions > 34 is some bug who stop all javascript when is show a prints preview
             //http://stackoverflow.com/questions/23071291/javascript-window-print-in-chrome-closing-new-window-or-tab-instead-of-cancel
             /*if(navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
@@ -2655,7 +2923,7 @@ angular.module('myApp.controllers', [])
                 $scope.orders=Orders.list();
             };
 
-         $scope.deleteOrder = function(order){
+            $scope.deleteOrder = function(order){
                 if (confirm("Удалить?")){
                     order.$delete(function(err){
                         if (err) console.log(err);
@@ -2671,6 +2939,14 @@ angular.module('myApp.controllers', [])
                     return '';
                 }
 
+            }
+            $scope.reOrder = function(order){
+                if (confirm("Удалить?")){
+                    order.$delete({remain:'remain'},function(err){
+                        if (err) console.log(err);
+                        $scope.afterSave();
+                    });
+                }
             }
 
 

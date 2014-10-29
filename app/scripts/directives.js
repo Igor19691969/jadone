@@ -74,7 +74,7 @@ angular.module('myApp.directives', []).
                 scope.$watch('galleryForZoom',function(oldVal,newVal){
                     if (oldVal==newVal) return;
                     linkElastislide(oldVal);
-                })
+                });
 
                 function linkElastislide(galArr){
                     if (galArr.length>2){
@@ -146,7 +146,7 @@ angular.module('myApp.directives', []).
             scope.$watch('galleryZoom',function(oldVal,newVal){
                 if (oldVal==newVal) return;
                 linkElevateZoom(oldVal);
-            })
+            });
             /*attrs.$observe('src',function(srcAttribute){
                 console.log("$observe : " +srcAttribute);
             })*/
@@ -378,7 +378,7 @@ angular.module('myApp.directives', []).
 
                 $scope.$on("$myNgModelSet", function () {
                     setValueFromInputElement();
-                })
+                });
 
                 //console.log('element[0].value='+element[0].value);
                 /*$timeout(function(){
@@ -512,7 +512,7 @@ angular.module('myApp.directives', []).
             scope: {enable:"=",
             idSet:'@'},
             link: function(scope, element, attr) {
-                console.log(scope.idSet);
+                //console.log(scope.idSet);
                 if (!scope.idSet)
                     scope.idSet=1;
                 var spinner =angular.element('<div class="spinner" id="spinner'+scope.idSet+'" ng-show="enable" ' +
@@ -652,5 +652,5 @@ angular.module('myApp.directives', []).
 
             }
         }
-    })
+    });
 

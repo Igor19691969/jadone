@@ -82,6 +82,7 @@ var myApp= angular.module('myApp', ['ngFx',
         'myApp.filters',
         'myApp.services',
         'myApp.directives',
+    'FB',
 
         'pascalprecht.translate',
         'dialogs.main'
@@ -90,10 +91,37 @@ var myApp= angular.module('myApp', ['ngFx',
 
 
 
-.run(['$rootScope', '$state', '$stateParams','Config','$global','subjectSrv',
+.run(['$rootScope', '$state', '$stateParams','Config','global','globalSrv',
         '$cookieStore','$resource','User','$window',"socket",'Category','$http','$location','Auth',
-        function ($rootScope,   $state,   $stateParams,Config,$global,subjectSrv,
+        function ($rootScope,   $state,   $stateParams,Config,global,globalSrv,
                   $cookieStore,$resource,User,$window,socket,Category,$http,$location,Auth){
+
+
+            global.set('country',{country_code:'UA'});
+            global.set('currency',"UAH");
+            global.set('rate',1);
+           /* globalSrv.getData('filter').then(function(response){
+                global.set('filter',response.data);
+            })*/
+            globalSrv.getData('filterTags').then(function(response){
+                global.set('filterTags',response.data);
+            });
+            /*globalSrv.getData('country').then(function(response){
+                global.set('country',response.data);
+                if (response.data && response.data.country_code){
+                    if (response.data.country_code=='RU' ||response.data.country_code=='RUS'){
+                        global.set('currency',"RUB");
+                    } else if (response.data.country_code=='UA'){
+                        global.set('currency',"UAH");
+                    }
+                    else {
+                        global.set('currency',"USD");
+                    }
+                }
+
+            })
+*/
+
 
             $rootScope.lang=getCookie('lan');
             $rootScope.$state = $state;
@@ -104,8 +132,8 @@ var myApp= angular.module('myApp', ['ngFx',
             $rootScope.user=null;
 
             $rootScope.titles={};
-          $rootScope.commonFilter={"tags":['xx','xx','xx']};
-            $rootScope.config=Config.get(function(res){
+            $rootScope.commonFilter={"tags":['xx','xx','xx']};
+            /*$rootScope.config=Config.get(function(res){
                 $rootScope.commonFilter.tags=res.tags;
                 $rootScope.currencyIndex=0;
                 $rootScope.currency='UAH';
@@ -127,8 +155,8 @@ var myApp= angular.module('myApp', ['ngFx',
                     }
                 }).error(function (data, status, headers, config) {})
 
-            });
-            $rootScope.slides=[];
+            });*/
+            /*$rootScope.slides=[];
             Category.list(function(res){
                 $rootScope.categories=res;
                 if($rootScope.categories[0]){
@@ -147,7 +175,7 @@ var myApp= angular.module('myApp', ['ngFx',
                 }
 
 
-            });
+            });*/
             $rootScope.changeStuff=false;
 
             $rootScope.$on('$stateChangeStart', function(event, to, toParams, fromState, fromParams){
@@ -168,7 +196,7 @@ var myApp= angular.module('myApp', ['ngFx',
                     //console.log(toParams);
                     $rootScope.$state.transitionTo('language.home',{'lang':toParams.lang});
                 }
-            })
+            });
 
             $rootScope.$on('$stateChangeSuccess', function (ev, to, toParams, from, fromParams) {
                 if ($window.ga)
@@ -183,8 +211,32 @@ var myApp= angular.module('myApp', ['ngFx',
             });
 }])
 
-.config(['$stateProvider', '$urlRouterProvider','$locationProvider','dialogsProvider','$translateProvider',function ($stateProvider,$urlRouterProvider,$locationProvider,dialogsProvider,$translateProvider){
+.config(['$stateProvider', '$urlRouterProvider','$locationProvider','dialogsProvider','$translateProvider','globalProvider',function ($stateProvider,$urlRouterProvider,$locationProvider,dialogsProvider,$translateProvider,globalProvider){
 
+
+        globalProvider.setUrl( {
+            country : '/api/getip/',
+            //config : '/api/config/',
+            //categories : '/api/collections/Category/',
+            //brands : '/api/collections/Brand/',
+            user:'/api/users/me/',
+            filter:'/api/filters/',
+            filterTags:'/api/tag/all/'
+        });
+
+
+        // инициализация глобальных переменных
+        globalProvider.set('config');
+        globalProvider.set('user');
+        globalProvider.set('country','UA');
+        globalProvider.set('currency',"UAH");
+        globalProvider.set('categories');
+        globalProvider.set('brands');
+        globalProvider.set('titles');
+        globalProvider.set('stats');
+        globalProvider.set('filters');
+        globalProvider.set('filterTags');
+        globalProvider.set('rate');
 
             dialogsProvider.useBackdrop('static');
             dialogsProvider.useEscClose(true);
@@ -233,8 +285,8 @@ var myApp= angular.module('myApp', ['ngFx',
         .state("language", {
             url: "/:lang",
             abstract:true,
-            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/mainFrame.html' },
-            controller: 'mainFrameCtrl'
+            templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/mainFrame.html' }
+            //controller: 'mainFrameCtrl'
         })
         .state("language.home", {
             url: "/home",
@@ -350,7 +402,7 @@ onEnter: ['Auth','$rootScope',function (Auth,$rootScope) {
             url: "/help",
             templateUrl: function(stateParams){ return 'views/partials/'+stateParams.lang+'/help.html' },
             //controller:'payCtrl'
-        })
+        });
 
  /*.state("language.searchStuff", {
            // url: "/searchstuff?searchStr",
@@ -361,7 +413,7 @@ onEnter: ['Auth','$rootScope',function (Auth,$rootScope) {
 
 
 
-}])
+}]);
 
 
 angular.module('caco.ClientPaginate', [])
@@ -399,7 +451,7 @@ angular.module('caco.ClientPaginate', [])
 
     .service('Paginator', function ($rootScope) {
         this.page = 0;
-        this.rowsPerPage = 54
+        this.rowsPerPage = 54;
         this.itemCount = 0;
 
         this.setPage = function (page) {
@@ -467,7 +519,8 @@ angular.module('caco.ClientPaginate', [])
             page:'=',
             row:'=',
             rowsPerPage :'@',
-            totalItems:'='
+            totalItems:'=',
+            hideRow:'@'
         },
         link: function (scope, element, attrs, controller) {
             scope.paginator={};
@@ -513,14 +566,14 @@ angular.module('caco.ClientPaginate', [])
             };
             scope.$watch('totalItems',function(n,o){
                 scope.paginator.itemCount=scope.totalItems;
-            })
+            });
             scope.$watch("paginator.page",function(n,o){
                 scope.page=scope.paginator.page;
             })
         },
         templateUrl: 'manager/views/templates/mongoPaginationControlAll.html'
     };
-})
+});
 
 
 angular.module('btford.socket-io', []).
@@ -625,10 +678,11 @@ angular.module('i.mongoPaginate', [])
         }
     })
 
-    .service('mongoPaginator', function ($rootScope) {
+    .service('mongoPaginator', function (global) {
         this.page = 0;
-        this.rowsPerPage = ($rootScope.config.perPage)?$rootScope.config.perPage:20
+        this.rowsPerPage = 20;
         this.itemCount = 0;
+
         //this.pageCount =13
 
         this.setPage = function (page) {
@@ -776,18 +830,18 @@ angular.module( "ngAutocomplete", [])
                 //console.log(scope.ngModel);
                 $timeout(function(){
                     element[0].value=scope.ngModel;
-                })
+                });
 
                 //console.log(element);
-                var opts
+                var opts;
                // scope.options.types='cities';
                 //convert options provided to opts
                 var initOpts = function() {
-                    opts = {}
+                    opts = {};
                    // console.log(scope.options);
                     if (scope.options) {
                         if (scope.options.types) {
-                            opts.types = []
+                            opts.types = [];
                             //console.log(scope.options.types);
                             opts.types.push(scope.options.types)
                         }
@@ -801,8 +855,8 @@ angular.module( "ngAutocomplete", [])
                         }
                     }
 
-                }
-                initOpts()
+                };
+                initOpts();
 
                 element.bind('blur', function () {
                     //console.log(scope.ngModel);
@@ -853,8 +907,8 @@ angular.module( "ngAutocomplete", [])
 
                         });
                     })
-                }
-                newAutocomplete()
+                };
+                newAutocomplete();
                 /*scope.$watch('ngModel', function (n) {
                     console.log(n);
                 });*/
@@ -864,8 +918,8 @@ angular.module( "ngAutocomplete", [])
                     return scope.options
                 };
                 scope.$watch(scope.watchOptions, function () {
-                    initOpts()
-                    newAutocomplete()
+                    initOpts();
+                    newAutocomplete();
                     element[0].value = '';
                     scope.ngAutocomplete = element.val();
                 }, true);
@@ -888,30 +942,26 @@ angular.module( "ngAutocomplete", [])
 
                 //options for autocomplete
                 scope.fromList=false;
-                var opts
-                var watchEnter = false
+                var opts;
+                var watchEnter = false;
                 //convert options provided to opts
                 var initOpts = function() {
 
-                    opts = {}
+                    opts = {};
                     if (scope.options) {
 
-                        if (scope.options.watchEnter !== true) {
-                            watchEnter = false
-                        } else {
-                            watchEnter = true
-                        }
+                        watchEnter = scope.options.watchEnter === true;
 
                         if (scope.options.types) {
-                            opts.types = []
-                            opts.types.push(scope.options.types)
+                            opts.types = [];
+                            opts.types.push(scope.options.types);
                             scope.gPlace.setTypes(opts.types)
                         } else {
                             scope.gPlace.setTypes([])
                         }
 
                         if (scope.options.bounds) {
-                            opts.bounds = scope.options.bounds
+                            opts.bounds = scope.options.bounds;
                             scope.gPlace.setBounds(opts.bounds)
                         } else {
                             scope.gPlace.setBounds(null)
@@ -920,13 +970,13 @@ angular.module( "ngAutocomplete", [])
                         if (scope.options.country) {
                             opts.componentRestrictions = {
                                 country: scope.options.country
-                            }
+                            };
                             scope.gPlace.setComponentRestrictions(opts.componentRestrictions)
                         } else {
                             scope.gPlace.setComponentRestrictions(null)
                         }
                     }
-                }
+                };
 
                 if (scope.gPlace == undefined) {
                     scope.gPlace = new google.maps.places.Autocomplete(element[0], {});
@@ -950,7 +1000,7 @@ angular.module( "ngAutocomplete", [])
                             }
                         }
                     }
-                })
+                });
 
                 //function to get retrieve the autocompletes first result using the AutocompleteService
                 var getPlace = function(result) {
@@ -995,7 +1045,7 @@ angular.module( "ngAutocomplete", [])
                                 }
                             });
                     }
-                }
+                };
 
                 controller.$render = function () {
                     var location = controller.$viewValue;
@@ -1012,4 +1062,35 @@ angular.module( "ngAutocomplete", [])
 
             }
         };
-    });
+    })
+
+angular.module('FB', []).directive('fbLike', function($timeout) {
+    return {
+        restrict: 'A',
+        scope: {},
+        template: "<div class=\"fb-like-box\" data-href=\"{{page}}\" data-width=\"{{width}}\" data-show-faces=\"{{faces}}\" data-height=\"{{height}}\" data-stream=\"{{stream}}\" data-header=\"{{header}}\"></div>",
+        link: function($scope, $element, $attrs) {
+            console.log('link');
+            var working, _ref, _ref1;
+            $scope.page = $attrs.fbLike;
+            $scope.height = (_ref = $attrs.fbHeight) != null ? _ref : '550';
+            $scope.faces = $attrs.fbFaces != null ? $attrs.fbFaces : 'false';
+            $scope.stream = $attrs.fbStream != null ? $attrs.fbStream : 'true';
+            $scope.header = $attrs.fbHeader != null ? $attrs.fbHeader : 'false';
+            $scope.width = (_ref1 = $attrs.fbWidth) != null ? _ref1 : $element.parent().width();
+            working = false;
+            $(window).on('resize', function() {
+                if (!working) {
+                    working = true;
+                    $timeout(function() {
+                        $scope.width = $element.parent().width();
+                        $timeout(function() {
+                            return FB.XFBML.parse($element[0]);
+                        }, 50, false);
+                        working = false;
+                    }, 10);
+                }
+            });
+        }
+    };
+});

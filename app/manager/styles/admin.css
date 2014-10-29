@@ -514,3 +514,16 @@ button.btn-sm.pull-right {
 .select2-container .select2-choice {
     height: 34px;
 }
+a.prosr {
+    color: #a90912;
+}
+a.prosr:hover, a.prosr:active {
+    color: #c75112;
+}
+
+a.prosrPochti{
+    color: #f08f13;
+}
+a.prosrPochti:hover, a.prosrPochti:active {
+    color: #fda916;
+}

@@ -1,3 +1,4 @@
+<!-- Start Alexa Certify Javascript -->
 <style>
     .dialogs-default p{
         color: red;
@@ -52,7 +53,7 @@
                                 <li class="divider-vertical"></li>-->
                                 <li title="корзина">
                                     <a ui-sref="language.cart" class="bag" ><img src="../../../img/cart.png"></a>
-                                    <span ng-show="itemsInCaet" class="badge badge-success" ng-bind="itemsInCaetlocalCart.cartCount()"></span>
+                                    <span ng-show="itemsInCaet" class="badge badge-success" ng-bind="itemsInCartlocalCart.cartCount()"></span>
                                     <!--ng-bind="localCart.cartCount()"-->
                                 </li>
                                 <li class="divider-vertical" ng-show="Auth.isLoggedIn()"></li>
@@ -101,8 +102,7 @@
                                     <a ><span ng-bind="categories[0].name[lang]"></span></a>
                                     <ul>
                                         <li ng-repeat="category in categories|filter:{section:categories[0]._id}">
-                                            <a ng-click="toCategory({lang:lang,category:category._id,section:'category'})">{{category.name[lang]}}</a>
-
+                                            <a ui-sref="language.stuff({lang:lang,category:category._id,section:'category'})">{{category.name[lang]}}</a>
                                         </li>
                                     </ul>
                                 </li>
@@ -197,7 +197,7 @@
         <div class="col-lg-4" style="font-size: 18px; padding-left: 60px;">
             <ul>
                 <li style="list-style: square;" ng-repeat="category in categories|filter:{section:categories[0]._id}">
-                    <a class="a-footer" ng-click="toCategory({lang:lang,category:category._id,section:'category'})">{{category.name[lang]}}</a>
+                    <a class="a-footer" ui-sref="language.stuff({lang:lang,category:category._id,section:'category'})">{{category.name[lang]}}</a>
                 </li>
             </ul>
         </div>
@@ -481,3 +481,8 @@ if(window.opera){PreventExitSplOpera = false;PreventExitSplash = false;}*/
 <script type="text/javascript">
     document.write(VK.Share.button(false,{type: "custom", text: "<img src=\"http://vk.com/images/vk32.png?1\" />"}));
 </script>-->
+
+
+<!-- Start Alexa Certify Javascript -->
+
+<!-- End Alexa Certify Javascript -->

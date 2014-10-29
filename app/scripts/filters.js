@@ -31,7 +31,7 @@ angular.module('myApp.filters', []).
 .filter('filterSection', function (version) {
     return function(input,sectionId) {
         if (sectionId==0)
-            return input
+            return input;
         else {
             var temp=[];
             angular.forEach(input, function (item) {

@@ -42,7 +42,7 @@ var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 
 
-var phantom = require('node-phantom');
+var phantom = require('node-phantom-simple');
 
 
 io.set('log level', 1);
@@ -114,6 +114,7 @@ app.use(phantomExpress(optionsphantom));*/
 });*/
 
 app.use(function(req, res, next) {
+    //console.log(req.query._escaped_fragment_);
     if(typeof(req.query._escaped_fragment_) !== "undefined") {
         var urlParse = url.parse(req.url);
         var urlQuery=urlParse.query;
@@ -275,21 +276,34 @@ app.use(function(req, res, next) {
 
 
 
-        /*phantom.create(function(err, ph) {
+        phantom.create(function(err, ph) {
+            //console.log('ph - ',err)
+            //console.log(ph)
             return ph.createPage(function(err, page) {
-                return page.open("http://jadone.biz/" + urlparams, function(status) {
+                //console.log(err)
+                //console.log(page);
+                return page.open("http://localhost:8808/" + urlparams, function(status) {
+                    console.log(status);
                     return page.evaluate((function() {
-                    // We grab the content inside <html> tag...
+                        // We grab the content inside <html> tag...
                         return document.getElementsByTagName('html')[0].innerHTML; }), function(err, result) {
                         // ... and we send it to the client.
                         //console.log(result)
-                            res.send(result);
-                            return ph.exit();
+                        res.send(result);
+                        return ph.exit();
                     });
                 });
             });
-        });*/
-        var pref= path.join(__dirname,"/snapshots",urlparams);
+        });
+
+        var date= new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+        var s = date + ' '+req.url+"\t"+urlparams+"\t\n";
+        fs.appendFile('crawling.log',s, function (err, data) {
+            if (err) throw error;
+        });
+
+
+        /*var pref= path.join(__dirname,"/snapshots",urlparams);
         var str='';
         //console.log(urlQuery);
         if (urlQuery){
@@ -321,7 +335,7 @@ app.use(function(req, res, next) {
 
         } else {
             res.sendfile(pref);
-        }
+        }*/
    } else {
         next();
     }

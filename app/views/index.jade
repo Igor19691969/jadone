@@ -1,9 +1,222 @@
 extends layout
 
 block body
+ div(ng-controller="mainFrameCtrl", ng-init="setInitData(#{JSON.stringify(config)},#{JSON.stringify(categories)},#{JSON.stringify(filters)},#{JSON.stringify(user)},#{JSON.stringify(stats)})")
+  div(id="panel")
+    spinner(id-set="contact",enable="contact.feedbackDisabled")
+    nav(class="navbar navbar-fixed-top navbar-inverse",role="navigation")
+      .navbar-inner
+        .container
+          button(type="button",class="btn btn-navbar navbar-toggle",data-toggle="collapse",data-target=".navbar-ex1-collapse",ng-init="isCollapsed = true",ng-click="isCollapsed = !isCollapsed")
+            span(class="sr-only")
+              Toggle navigation
+            span(class="icon-bar")
+            span(class="icon-bar")
+            span(class="icon-bar")
+
+          a(class="brand",onclick="window.location.href='/admin123'")
+            |Jadone Fashion
+          div(class="collapse navbar-collapse navbar-ex1-collapse pull-left",collapse="isCollapsed")
+            ul(class="nav navbar-nav")
+              li(class="home")
+                a(ui-sref="language.home")
+                  span(class="glyphicon glyphicon-home")
+
+              li(class="divider-vertical")
+              li(ng-hide="user.val")
+                a(ui-sref="language.login",ng-click="")
+                  |Вход
+              li(ng-show="user.val")
+                a(ng-click="logout()")
+                  |Выйти
+              li(class="divider-vertical")
+              li(class="dropdown",id="changeCurrencyUl")
+                a(href="#",class="dropdown-toggle",data-toggle="dropdown")
+                  img(class="vw",ng-src="img/icon/{{currency.val}}_inv.png")
+                  |{{currency.val}}
+                  b(class="caret")
+                ul(class="dropdown-menu")
+                  li(ng-hide="(countryRUB || countryUSD) && user.role!='admin'")
+                    a(ng-click="changeCurrency('UAH')")
+                      img(class="vw",src="img/icon/uah.png")
+                      |UAH
+                  li
+                    a(ng-click="changeCurrency('RUB')")
+                      img(class="vw",src="img/icon/rub.png")
+                      |RUB
+                  li(ng-hide="(countryUAH || countryRUB) && user.role!='admin'")
+                    a(ng-click="changeCurrency('USD')")
+                      img(class="vw",src="img/icon/usd.png")
+                      |USD
+
+
+
+              li(class="divider-vertical")
+              li(title="корзина")
+                a(ui-sref="language.cart",class="bag")
+                  img(src="../../../img/cart.png")
+                  span(ng-show="itemsInCart",class="badge badge-success",ng-bind="localCart.cartCount()")
+              li(class="divider-vertical",ng-show="Auth.isLoggedIn()")
+              li(ng-show="user.val",title="чат")
+                a(ui-sref="language.chat",class="bag")
+                  img(src="../../../img/chat2.png")
+                  span(class="badge badge-success",ng-show="msgs=displayNewMsg()",ng-bind="msgs")
+                  .clearfix
+              li(class="divider-vertical")
+              li
+                a(ui-sref="language.help")
+                  |CПРАВКА
+          form(data-ng-submit="goToSearch(searchStr)")
+            div(class="input-group search")
+              input(type="text",class="form-control",ng-model="searchStr")
+              span(class="input-group-btn")
+                button(class="btn btn-danger",type="submit")
+                  span(class="glyphicon glyphicon-search icon-white",style="padding-top: 2px;")
+
+  header
+    .container
+      .row
+        div(class="col-lg-12 col-md-12 col-sm-12 col-xs-12")
+            div(class="navbar navbar_")
+              a(class="btn btn-navbar ",data-toggle="collapse",data-target="navbar-collapse_",ng-init="isCollapsed1=true",ng-click="isCollapsed1 = !isCollapsed1")
+                |Меню
+                b(class="sf-sub-indicator")
+              h1(class="brand")
+                a(ui-sref="language.home")
+                  img(alt="",src="img/background/brand5.jpg")
+              div(class="collapse navbar-collapse nav-collapse_ navbar-ex2-collapse",collapse="isCollapsed1")
+                ul(class="nav sf-menu pull-right",id="example1")
+                  li(class="sub-menu",ng-class="{ active: $state.includes('language.stuff')||$state.includes('language.stuff.detail') }")
+                    a
+                     span
+                      |одежда
+                    ul
+                      each category,index in categories
+                       li
+                         - var title = "купить оптом "+category.name['ru']+" от производителя Jadone Fashion"
+                         - var sref = "/ru/stuff/category/"+category._id
+                         a(href=sref, title=title)
+                           =category.name['ru']
+                  li(ng-class="{ active: $state.includes('language.stuffSale') }")
+                    a(ui-sref="language.stuffSale")
+                      |sale
+                  li(class="sub-menu",ng-show="user.val",ng-class="{ active: $state.includes('language.profile') || $state.includes('language.customOrder')||$state.includes('language.chat')}")
+                    a
+                      |кабинет
+                    ul
+                      li
+                        a(ui-sref="language.profile")
+                          |личные<br> данные
+                      li
+                        a(ui-sref="language.customOrder")
+                          |управление<br> заказами
+                      li
+                        a(ui-sref="language.chat")
+                          |чат
+                      li
+                        a(ng-click="logout()")
+                          |выйти
+                  li(class="sub-menu",ng-class="{ active: $state.includes('language.payment') ||$state.includes('language.delivery')||$state.includes('language.aboutus')||$state.includes('language.news')}")
+                    a
+                      |инфо
+                    ul
+                      li
+                        a(ui-sref="language.payment")
+                          |оплата
+                      li
+                        a(ui-sref="language.delivery")
+                          |доставка
+                      li
+                        a(ui-sref="language.aboutus")
+                          |о нас
+                      li
+                        a(ui-sref="language.news")
+                          |новости
+                      li
+                        a(ui-sref="language.contacts")
+                          |контакты
+
+
 
   div( ui-view )
+    img(src="/img/slide/4.jpg")
 
+
+
+  footer(style="background-color: #333")
+    div(class="container clearfix")
+      h3
+        |В рассылке от Jadone Fashion – актуально, модно и недорого!
+      p
+        |В интернет-магазине jadone.biz вы найдете интересные и стильные платья, туники, костюмы и другую женскую одежду оптом и в розницу от проищводителя, свежие новинки, интересные события в мире моды, современные и актуальные ткани и технологии, уникальный крой и эксклюзивный декор моделей. Благодаря рассылке Вы всегда будете в курсе новых поступлений на сайт и обновления ассортимента, мы будем сообщать Вам об акциях и распродажах. Оптовые цены действуют от 5 единиц, а все доступные размеры одной модели предлагаются по одинаковой цене.
+      p
+        |Откройте для себя интернет-магазин jadone.biz, где Вы всегда найдете oтличный выбор женской стильной одежды, широкую цветовую гамму от пастельных до ярких неоновых расцветок, самые актуальные принты, прекрасную комбинацию деловых и вечерних нарядов, строгих и по-юношески задорных платьев, которые Вы сможете купить оптом прямо у производителя.
+      p
+        |Найдите для себя оптимальный образ с одеждой от oт Jadone Fashion.
+      .col-lg-4
+        form(ng-submit="subscribe.send()")
+          div(class="input-group mb",style="width: 100%")
+            span(class="input-group-addon")
+              span(class="glyphicon glyphicon-envelope")
+            input(class="form-control",type="email",ng-model="subscribe.email",required="")
+          button(class="btn btn-block btn-danger btn-1 btn-lg mb",type="submit")
+            |подписаться
+        ul(class="list-social")
+          li
+            a(class="icon-1",href="#")
+          li
+            a(class="icon-2",href="#")
+          li
+            a(class="icon-3",href="#")
+          li
+            a(class="icon-6",href="http://vk.com/jadoneopt")
+        hr
+        div
+          ul(class="col-lg-12",style="font-size: 20px;")
+            li(class="col-lg-4")
+              a(ui-sref="language.news",class="a-footer")
+                |новости
+            li(class="col-lg-4")
+              a(ui-sref="language.contacts",class="a-footer")
+                |контакты
+            li(class="col-lg-4")
+              a(ui-sref="language.stuffSale({'sale':'new'})",class="a-footer")
+                |новинки
+
+      div(class="col-lg-4",style="font-size: 18px; padding-left: 60px;")
+        ul
+          each category,index in categories
+            li
+              - var title = "купить оптом "+category.name['ru']+" от производителя Jadone Fashion"
+              - var sref = "/ru/stuff/category/"+category._id
+              a(href=sref, title=title)
+                =category.name['ru']
+      .col-lg-4
+        form(class="form",name="form",data-ng-submit="contact.sendMessage()")
+          div(class="input-group mb",style="width: 100%")
+           span(class="input-group-addon")
+              span(class="glyphicon glyphicon-user")
+           input(class="form-control",type="text",data-ng-model="contact.msg.name",required)
+
+          div(class="input-group mb",style="width: 100%")
+            span(class="input-group-addon")
+              span(class="glyphicon glyphicon-envelope")
+            input(class="form-control",type="email" ,data-ng-model="contact.msg.email",required)
+
+          textarea(class="mb",style="width: 100%; padding: 10px;",placeholder="введите текст сообщения",rows="6",data-ng-model="contact.msg.text")
+          div(class="fade in text-error_up",ng-show="contact.errorText")
+            p(class="help-block")
+              |введите текст сообщения не менее 10 символов
+          button(class="btn btn-block btn-danger btn-1 btn-lg mb",ng-disabled="contact.feedbackDisabled",type="submit")
+            |отправить сообщение
+          div(class="fade in text-error" ,ng-show="contact.SuccessFeedBack")
+            p
+              |Ваше сообщение отправлено
+      .clearfix
+    div(class="col-lg-12 text-center",style="background-color: #fff; margin-bottom: 30px;")
+      a(ui-sref="language.home")
+        h1(class="nazv",style=" margin-top: 50px; ")
+          |Jadone Fashion 2014</h1
 
   script(type="text/javascript",src="http://maps.googleapis.com/maps/api/js?libraries=places&sensor=true_or_false")
   script(src="bower_components/jquery/jquery.js")

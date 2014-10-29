@@ -1,3 +1,4 @@
+
 <style type="text/css">
     #gallery_022 img{border:2px solid white;}
     .active img{border:2px solid #333 !important;}
@@ -16,7 +17,28 @@
                                                 zoom-image="{{activePhoto.img}}"
                                                 alt="купить {{stuff.category.name[lang]}} {{stuff.name[lang]}}&nbsp{{activePhoto.name}}  оптом от украинского производителя Jadone Fashion"/>
           					</div><!--inner-1-->
-                            <div gallery-for-zoom="stuff.gallery" on-photo-selected="changePhoto(newIndex)"></div>
+                            <div class="col-lg-12">
+                                <div gallery-for-zoom="stuff.gallery" on-photo-selected="changePhoto(newIndex)"></div>
+                            </div>
+
+                           <!-- <div class="">
+                                <a ng-click="Share.vkontakte(shareUrl,shareTitle,shareImg,shareDesc)"> VK</a>
+                                <a ng-click="Share.facebook('URL','TITLE','IMG_PATH','DESC')"> FB</a>
+                                <a ng-click="Share.mailru('URL','TITLE','IMG_PATH','DESC')"> MR</a>
+                                <a ng-click="Share.odnoklassniki('URL','DESC')"> OD</a>
+                                <a ng-click="Share.twitter('URL','TITLE')"> tw</a>
+                            </div>-->
+                            <div class="col-lg-12">
+                                <ul class="list-social">
+                                    <li><a  class="icon-vk" ng-click="Share.vkontakte(shareUrl,shareTitle,shareImg,shareDesc)"></a></li>
+                                    <li><a class="icon-mr"ng-click="Share.mailru(shareUrl,shareTitle,shareImg,shareDesc)"></a></li>
+                                    <li><a class="icon-od"ng-click="Share.odnoklassniki(shareUrl,shareDesc)"></a></li>
+
+                                </ul>
+
+
+                            </div>
+
 
 
 
@@ -196,10 +218,10 @@
                                 <li class="dd">
                                     <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12 price_type">опт</div>
                                     <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4" ng-class="{'new_price':stuff.priceSale,'price_type':!stuff.priceSale}">
-                                        <span ng-bind="(stuff.price*config.currency[currency][0]).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
+                                        <span ng-bind="(stuff.price*rate.val).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
                                     </div>
                                     <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 price_detail" ng-show="stuff.priceSale">
-                                        <span ng-bind="(stuff.priceSale*config.currency[currency][0]).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
+                                        <span ng-bind="(stuff.priceSale*rate.val).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
                                     </div>
                                 </li>
 
@@ -208,10 +230,10 @@
                                 <li class="dd">
                                     <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12 price_type">розница</div>
                                     <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4" ng-class="{'new_price':stuff.retailSale,'price_type':!stuff.retailSale}">
-                                        <span ng-bind="(stuff.retail*config.currency[currency][0]).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
+                                        <span ng-bind="(stuff.retail*rate.val).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
                                     </div>
                                     <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 price_detail" ng-show="stuff.retailSale">
-                                        <span ng-bind="(stuff.retailSale*config.currency[currency][0]).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
+                                        <span ng-bind="(stuff.retailSale*rate.val).toFixed(2)"></span>&nbsp<span style="font-size: 20px"  ng-bind="config.currency[currency][1]"></span>
                                     </div>
                                 </li>
 

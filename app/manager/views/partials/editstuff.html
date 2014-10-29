@@ -76,13 +76,17 @@
                             <div  ng-switch-when="2">
                                 <label  class="col-md-3 col-md-offset-1 control-label"ng-bind="filter.name[config.DL]"></label>
                                 <div class="col-md-8" >
+                                    <select multiple class="full-width" ui-select2="groupSetup" ng-model="filtersValue[filter._id]"  data-placeholder="выберите значение" ng-change="changeFitlerVal()" id="filterM{{filter._id}}">
+                                        <option ng-repeat="opt in filter.tags|orderBy:'index' " value="{{opt._id}}">{{opt.name[config.DL]}}</option>
+
+                                    </select>
 
                                     <!--<div class="form-group">-->
-                                        <select  id="filterM{{filter._id}}" class="form-control" multiple ng-change="changeFitlerVal()"
+                                        <!--<select  id="filterM{{filter._id}}" class="form-control" multiple ng-change="changeFitlerVal()"
                                                  ng-model="filtersValue[filter._id]"
                                                  ng-options="opt._id as opt.name[config.DL] for opt in filter.tags|orderBy:'index' ">
                                             <option value="">выберите значение</option>
-                                        </select>
+                                        </select>-->
                                     <!--</div>-->
                                 </div>
                             </div>

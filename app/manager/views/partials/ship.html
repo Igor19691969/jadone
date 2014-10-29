@@ -26,31 +26,33 @@
                 <label class="control-label col-lg-2" for="cur"></label>
                 <div class="controls">
                     <div class="input-group">
-                        <input  style="padding-left: 5px;height: 36px; border-radius: 4px; margin-bottom: 10px;" placeholder="добавьте поставщика" id="cur" ng-model="shipper">
+                        <input  style="padding-left: 5px;height: 36px; border-radius: 4px; margin-bottom: 10px; margin-right: 7px;" placeholder="добавьте поставщика" id="cur" ng-model="shipper">
                         <a data-ng-click="addShipper(shipper);shipper=''">
-                            <span class="glyphicon glyphicon-plus"></span>
+                            <span style="font-size: 18px; color: #009900;" class="glyphicon glyphicon-plus"></span>
                         </a>
 
                     </div>
                 </div>
             </div>
 
-            <div class="control-group col-lg-10 col-lg-offset-2">
-                <label class="control-label col-lg-2" for="cur"></label>
-                <div class="controls" data-ng-repeat="shipper in ship.shippers">
+            <div class="control-group col-lg-10 col-lg-offset-2" style="margin-bottom: 20px;">
+                <div for="cur"></div>
+                <div class="controls " data-ng-repeat="shipper in ship.shippers">
+                    <label class="control-label col-lg-2" for="cur"></label>
                     <div class="input-group">
-                        <input data-ng-model="ship.shippers[$index]">
+                        <input  style="padding-left: 5px;height: 36px; border-radius: 4px; margin-bottom: 10px; margin-right: 7px;"  data-ng-model="ship.shippers[$index]">
                         <a data-ng-click="deleteShipper($index)">
-                            <span class="glyphicon glyphicon-minus"></span>
+                            <span style="font-size: 18px; color: #c11919;" class="glyphicon glyphicon-minus"></span>
                         </a>
 
                     </div>
                 </div>
             </div>
+            <div class="col-lg-offset-3 col-lg-8">
 
-            <button type="button" data-ng-click="saveShip(ship.id)" >сохранить</button>
-            <button type="button" data-ng-click="deleteShip(ship.id)" >удалить</button>
-
+            <button class="btn btn-lg btn-success col-lg-3" style="margin-left: 60px; " type="button" data-ng-click="saveShip(ship.id)" >сохранить</button>
+            <button class="btn btn-lg btn-danger col-lg-3  pull-right" style="margin-right: 50px; " type="button" data-ng-click="deleteShip(ship.id)" >удалить</button>
+        </div>
 
         </div>
         <div class="clearfix"></div>

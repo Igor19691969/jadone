@@ -1,48 +1,13 @@
-<script type="text/ng-template" id="paginationControl.html" xmlns="http://www.w3.org/1999/html">
-    <div class="text-center" ng-show="paginator.pageCount() > 1">
-        <ul class="pagination">
-            <li ng-click="paginator.firstPage()" ng-class="paginator.isFirstPage() && 'disabled'">
-                <a>
-                    <i class="glyphicon glyphicon-fast-backward" ng-class="paginator.isFirstPage() && 'icon-white'"></i>
-                </a>
-            </li>
-            <li ng-click="paginator.perviousPage()" ng-class="paginator.isFirstPage() && 'disabled'">
-                <a>
-                    <i class="glyphicon glyphicon-step-backward" ng-class="paginator.isFirstPage() && 'icon-white'"></i>
-                </a>
-            </li>
-            <li ng-click="paginator.setPage(i)" ng-repeat="i in [] | forLoop:0:paginator.pageCount()" ng-class="paginator.page==i && 'active'">
-                <a>{{i+1}}</a>
-            </li>
-            <li ng-click="paginator.nextPage()" ng-class="paginator.isLastPage() && 'disabled'">
-                <a>
-                    <i class="glyphicon glyphicon-step-forward" ng-class="paginator.isLastPage() && 'icon-white'"></i>
-                </a>
-            </li>
-            <li ng-click="paginator.lastPage()" ng-class="paginator.isLastPage() && 'disabled'">
-                <a>
-                    <i class="glyphicon glyphicon-fast-forward" ng-class="paginator.isLastPage() && 'icon-white'"></i>
-                </a>
-            </li>
-        </ul>
-    </div>
-</script>
 <div class="bg-content" ng-hide="$state.includes('language.stuff.detail')">
     <div id="content">
-        <!--<div class="button_fixed" id="toTop">
-            <a ng-click="scrollTo('panel')"
-               class="btn btn-inverse"><i class="icon  icon-arrow-up icon-white"></i></a>
-        </div>-->
         <div class="button_fixed" id="toTop">
             <a ng-click="scrollTo('panel')"
                class="btn btn-inverse"><span class="glyphicon glyphicon-arrow-up icon-white"></span></a>
         </div>
-        <!--<div class="ic"></div>-->
         <div class="paginator">
-            <mongo-paginator></mongo-paginator>
+            <mongo-paginator-all type="order" page="paginate.page" row="paginate.row" rows-per-page="50" total-items="paginate.totalItems" hide-row="true"></mongo-paginator-all>
         </div>
         <div class="container">
-
             <div class="row row-list">
                 <ul class="thumbnails thumbnails-1 list-services">
                     <li class="col-lg-4 col-md-4 col-sm-6 col-xs-12" ng-show="!show_all_filters">
@@ -86,7 +51,7 @@
                             </div>
                             <div class="clearfix"></div>
                             <div class="filters" ng-show="displayFilters">
-                                <div ng-repeat="filterItem in filters" ng-show="displayFilter[$index]">
+                                <div ng-repeat="filterItem in filters" ng-show="displayFilterTags(filterItem.tags)" >
                                     <div class="border-horiz"></div>
                                     <div class="pull-left left-filters"><p ng-bind="filterItem.name[lang]"></p></div>
                                     <div class="clearfix"></div>
@@ -102,7 +67,8 @@
                                         </label>
 
 
-                                        <label class="checkbox" ng-repeat="item in filterItem.tags" ng-show="showItemFilter(item._id,$parent.$index)" style="font-weight: 400;">
+                                        <label class="checkbox" ng-repeat="item in filterItem.tags" ng-show="filterTagsArray.indexOf(item._id)>-1" style="font-weight: 400;">
+
                                             <input
                                                     type="radio"
                                                     value="{{item._id}}"
@@ -120,7 +86,8 @@
                     </li>
 
                     <li class="col-lg-4 col-md-4 col-sm-6 col-xs-12 list-models"
-                        ng-repeat="item in stuffList">
+                        ng-repeat="item in stuffList|filter:{'colorId':filterForColor}">
+                       <!-- {{filterForColor}}-->
                         <!--ng-repeat="item in stuffList|filter:filterLists()| paginate:rowsPerPage">-->
 
                         <div class="thumbnail thumbnail-1" id="good{{item.itemToCartFromList.url}}">
@@ -138,12 +105,12 @@
                                 <div class="clearfix"></div>
                                 <p class="pull-left price_desk">
                                     <span class="pull-left"> опт</span>&nbsp
-                                    <span class="price" ng-bind="(item.price*config.currency[currency][0]).toFixed(2)"></span>
-                                    &nbsp<span  ng-bind="config.currency[currency][1]"></span><br>
+                                    <span class="price" ng-bind="(item.price*rate.val).toFixed(2)"></span>
+                                    &nbsp<span  ng-bind="currency.val"></span><br>
 
 
-                                    <span> розн</span>&nbsp <span class="price"ng-bind="(item.retail*config.currency[currency][0]).toFixed(2)"></span>
-                                    &nbsp<span  ng-bind="config.currency[currency][1]"></span>
+                                    <span> розн</span>&nbsp <span class="price"ng-bind="(item.retail*rate.val).toFixed(2)"></span>
+                                    &nbsp<span  ng-bind="currency.val"></span>
                                 </p>
                                 <a class="pull-right btn btn-1"  ui-sref="language.stuff.detail({id:item.id,color:item.colorId})"
                                    title="купить {{item.category}} оптом от производителя {{item.name}}&nbsp{{item.color}}">Подробнее</a>
@@ -156,7 +123,8 @@
             </div>
         </div>
         <div class="paginator">
-            <mongo-paginator></mongo-paginator>
+            <mongo-paginator-all type="order" page="paginate.page" row="paginate.row" rows-per-page="50" total-items="paginate.totalItems" hide-row="true"></mongo-paginator-all>
+           <!-- <mongo-paginator></mongo-paginator>-->
         </div>
         <div class="col-lg-12 text-center mb60" style="border-top: 1px solid #666;">
 

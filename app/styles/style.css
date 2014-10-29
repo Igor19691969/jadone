@@ -1279,6 +1279,17 @@ footer h1.nazv {
     background-repeat: no-repeat;
 
 }
+.list-social a.icon-vk {
+    background-image: url(../img/icon/soc/vk.png);
+}
+.list-social a.icon-od {
+    background-image: url(../img/icon/soc/od.png);
+}
+.list-social a.icon-mr {
+    background-image: url(../img/icon/soc/mr.png);
+}
+
+
 .list-social a.icon-1 {
     background-image: url(../img/icon/f.png);
 }

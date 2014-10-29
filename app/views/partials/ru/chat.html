@@ -16,12 +16,13 @@
     <div class="container" >
         <div class="row">
             <div class="col-lg-12" style="margin-top: 40px;">
-                <h3 style="font-size: 26px;" ng-hide="Auth.isLoggedIn()"> Для пользования чатом необходимо <a ui-sref="language.login">авторизоваться. </a></h3>
+                <h3 style="font-size: 26px;" ng-hide="user"> Для пользования чатом необходимо <a ui-sref="language.login">авторизоваться. </a></h3>
                 <p  data-ng-hide="user.role=='admin'||user.role=='admin_order_retail'||user.role=='admin_order_opt'||user.role=='admin_order_optUA'" style="font-weight: bolder;">Чат создан для удобства Вашего общения с администрацией сайта и менеджером, ведущим Ваши заказы.
                     После оформления заказа в чате будет создан диалог  с администратором сайта.
                     Используя чат, Вы сможете оперативно общаться с администратором
                     и получать информацию об оформленных заказах.
                     </p>
+                <h5>Если у Вас более одного диалога, то для выбора необходимого Вам чата, кликнете на нем в списке в колонке слева.<h5>
 
                     <div class="users col-lg-3 col-lg-offset-1 col-md-4 col-sm-5 col-xs-12  " style="margin-bottom: 50px; padding-left: 0" >
                         <!--<div class="chat_head">
@@ -70,10 +71,11 @@
 
                             </p>
                         </div>
+                                <input type="text" class="form-control search" ng-model="userNameForSearch" style="margin-bottom: 0px"/>
                             <select style="margin-bottom: 0px; margin-top: 2px;" ui-select2  data-placeholder="добавить в список чатов"  ng-model="selectedUser"
                                     data-ng-show="user.role=='admin'||user.role=='admin_order_retail'||user.role=='admin_order'">
                                 <option value="">добавить в список чатов</option>
-                                <option ng-repeat="User in listUsers|filter:{'country':country}" ng-value="User._id" data-ng-hide="User._id==user._id">{{User.name}}</option>
+                                <option ng-repeat="User in listUsers" ng-value="User._id" data-ng-hide="User._id==user._id">{{User.name}}</option>
                             </select>
                         </div>
                     </div>

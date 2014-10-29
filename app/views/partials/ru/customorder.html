@@ -3,12 +3,13 @@
     <div class="container">
 
             <!--<h3>Редактирование заказов</h3>-->
-            <h3 ng-hide="Auth.isLoggedIn()" style="font-size: 24px;"> Для получения доступа к управлению заказами необходимо <a ui-sref="language.login">авторизоваться. </a></h3>
+            <h3 ng-hide="user" style="font-size: 24px;"> Для получения доступа к управлению заказами необходимо <a ui-sref="language.login">авторизоваться. </a></h3>
 
             <div class="row">
                 <article class="col-lg-12 col-md-12" >
                 <h3>Заказы</h3>
-                <p style="font-size: 18px;">Оплатить заказ можно после его обработки и изменения статуса на <span style=" color: #30861b;">ПРИНЯТ</span>. Удаление заказа возможно только до его оплаты.</p>
+                <p style="font-size: 18px;">Оплатить заказ можно после его обработки <!--и изменения статуса на <span style=" color: #30861b;">ПРИНЯТ</span>--> и выставления счета на оплату (в графе оплата появится кнопка 'оплатить'). Удаление заказа возможно только до его оплаты.
+                Вопросы вы можете задавать используя <a ui-sref="language.chat">ЧАТ</a> (иконка в верхнем меню рядом с корзиной)</p>
                     <div style="overflow-x: auto; " class="mb">
                    <!-- <table class="status col-lg-8 col-md-8 col-sm-12 col-xs-12">
                         <tr>
@@ -92,11 +93,13 @@
                             <tr>
                                 <th class="center">№</th>
                                 <th class="col-lg-2 center" > дата поступления</th>
+                                <th  class="col-lg-2 center" ng-show="!order.date2">оринтрировочная дата отправки</th>
                                 <th  class="col-lg-2 center">дата оплаты</th>
-                                <th   class="col-lg-2 center">дата отправки</th>
+                                <th   class="col-lg-2 center"ng-show="order.date2">дата отправки</th>
                                 <!--<th class="col-lg-1" >Дата доставки</th>-->
                                 <th class="center">к-во</th>
                                 <th  class="center" >сумма</th>
+                                <th  class="center" >итого с доставкой</th>
                                 <th  class="center">статус</th>
                                 <th  class="center" >оплата</th>
                                 <th  class="center" >удалить</th>
@@ -108,15 +111,21 @@
                             <td class="col-lg-1">
                                 <a  ng-click="order.showdetail=!order.showdetail;fromChat=''"class="black" ng-bind="dateConvert(order.date)"></a>                                <span class="glyphicon glyphicon-chevron-down" style="margin-left: 5px;"></span>
                             </td>
+                            <td class="col-lg-1" ng-show="!order.date2">
+                                <a  ng-click="order.showdetail=!order.showdetail;fromChat=''"class="black" ng-bind="dateConvert(order.dateOfShip)"></a>
+                                <!-- <span class="glyphicon glyphicon-chevron-down" style="margin-left: 5px;"></span>-->
+                            </td>
                             <td class="col-lg-1">
                                 <a  ng-click="order.showdetail=!order.showdetail;fromChat=''"class="black" ng-bind="dateConvert(order.date1)"></a>
                                <!-- <span class="glyphicon glyphicon-chevron-down" style="margin-left: 5px;"></span>-->
                             </td>
-                            <td class="col-lg-1"> <a  ng-click="order.showdetail=!order.showdetail;fromChat=''"class="black" ng-bind="dateConvert(order.date2)"></a> </td>
+                            <td class="col-lg-1" ng-show="order.date2">
+                                <a  ng-click="order.showdetail=!order.showdetail;fromChat=''"class="black" ng-bind="dateConvert(order.date2)"></a> </td>
                             <!--<td class="col-lg-1"> <a  ng-click="order.showdetail=!order.showdetail;fromChat=''"class="black" ng-bind="dateConvert(order.date3)"></a> </td>-->
 
                             <td class="col-lg-1" ng-bind="order.quantity"></td>
                             <td class="col-lg-1">{{(order.kurs*orderSum(order,order.quantity,true)).toFixed(2)}} &nbsp{{order.currency}}</td>
+                            <td class="col-lg-1">{{(order.shipCost+order.kurs*orderSum(order,order.quantity,true)).toFixed(2)}} &nbsp{{order.currency}}</td>
                             <td class="col-lg-2" ng-switch="order.status">
 
                                 <select style="width: 150px; height: 30px; padding: 5px;" ng-switch-when="4" ng-model="order.status" ng-change="updateOrder(order)">
@@ -130,8 +139,8 @@
 
                             </td>
                             <td >
-                                &nbsp
-                                <!--<button ng-disabled="order.status!=2" class="btn btn-success" style="height: 34px;" ng-click="goToPay(order)">Оплатить</button>-->
+                                <!--&nbsp-->
+                                <button ng-show="order.status==2 && order.invoice" class="btn btn-success" style="height: 34px;" ng-click="goToPay(order)">Оплатить</button>
                             </td>
                             <td class="col-lg-1 text-center" >
                                 <a ng-hide="order.status>2" ng-disabled="order.status>2" ng-click="deleteOrder(order)"><span class="glyphicon glyphicon-remove"></span></a>
@@ -139,7 +148,7 @@
 
                         </tr>
                         <tr  ng-if="order.showdetail || order.num==fromChat" id="{{order.showdetail=order.num}}" >
-                            <td  colspan="9" style="background-color:#ccc; padding:5; border:none;">
+                            <td  colspan="10" style="background-color:#ccc; padding:5; border:none;">
                                 <table class="col-lg-12 col-md-12 col-sm-12 col-xs-12 table table-bordered table_bag">
                                     <thead>
                                     <tr>
@@ -251,6 +260,20 @@
                                         <td>{{order.quantity}}</td>
                                         <td>{{ (order.kurs*getTotalSum(order,order.quantity,1)).toFixed(2) }}&nbsp{{order.currency}}</td>
                                     </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>доставка</td>
+                                        <td></td><td></td><td></td><td></td><td></td>
+                                        <td>{{(order.shipCost).toFixed(2)}}&nbsp{{order.currency}}</td>
+
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td><strong>ВСЕГО</strong></td>
+                                        <td></td><td></td><td></td><td></td><td></td>
+                                        <td>{{(order.shipCost+(+order.kurs*getTotalSum(order,order.quantity,1))).toFixed(2)}}&nbsp{{order.currency}}</td>
+
+                                    </tr>
                                     </tbody>
                                 </table>
                             </td>
@@ -262,3 +285,26 @@
 
     </div>
  </div>
+
+<script type="text/ng-template" id="myModalContent.html">
+    <div class="modal-header">
+        <a  ng-click="cancel()"><span class="pull-right glyphicon glyphicon-remove"></span></a>
+        <h3 class="modal-title"style="color: #666">Уважаемый пользователь!</h3>
+    </div>
+    <div class="modal-body">
+
+        <p>
+            Ваш заказ получен.<br>
+            В ближайшее время с Вами свяжется менеджер для уточнения сроков поставки и оплаты<br>
+            Нажав на кнопку "управление заказами", Вы можете перейти в личный кабинет и контролировать и изменять статус Вашего заказа.<br>
+            Содержание заказа можно увидеть, нажав мышкой на дате поступления Вашего заказа.
+            В течении нескольких минут Вы получите письмо на указанный Вами e-mail. Обратите внимание, что это может занять несколько минут.
+            Так же убедитесь, что вы проверили все свои  папки для входящих писем, включая СПАМ/SPAM/JUNK.
+        </p>
+
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-success" ng-click="customOrder()">Управление заказами</button>
+        <button class="btn btn-success" style="height: 34px;" ng-click="home()">Главная</button>
+    </div>
+</script>

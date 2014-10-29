@@ -16,118 +16,96 @@ function findById(collection,id){
 angular.module('myApp.services', []).
      value('version', '0.1')
     //http://michaeleconroy.blogspot.com/2013_09_01_archive.html
-    .factory('$global',['$http',function($http){
-        var _urls = {
-            country : '/api/getip/',
-            config : '/api/config/',
-            categories : '/api/category/',
-            user:'/api/users/me/'
-        }; // end urls
-        var _currency,
-            _country,
-            _config,
-            _categories;
-        var _user = null;
-        var _titles={};
-
-        return {
-            request : function(url,vars){
-                if(angular.isDefined(vars)){
-                    return $http.post(url,$.param(vars),{headers:{'Content-Type': 'application/x-www-form-urlencoded'}});
-                }else{
-                    return $http.get(url);
-                }
-            },
-
-            url : function(which){
-                return _urls[which];
-            }, // end url
-            setCurrency : function(data){
-                _currency = data;
-            },
-            getCarrency : function(){
-                return _currency;
-            },
-            setCongif : function(data){
-                _config = data;
-            },
-            getCongif : function(){
-                return _config;
-            },
-            setCountry : function(data){
-                if (data.country_code){
-                    _country = data.country_code;
-                    if (data.country_code=='RU' || data.country_code=='RUS'){
-                        _currency="RUB";
-                    } else if (data.country_code=='UA'){
-                        _currency="UAH";
-                    }
-                    else {
-                        _currency="USD";
-                    }
-                }
-           },
-            getCountry : function(){
-                return _country;
-            },
-            setCategories : function(data){
-                _categories = data;
-            },
-            getCategories : function(){
-                return _categories;
-            },
-            setUser : function(aUser){
-                if (!aUser._id && aUser.id) { aUser._id=aUser.id;}
-                if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
-                _user = aUser;;
-            },
-            getUser : function(){
-                return _user;
-            },
-            setTitles : function(data){
-                _titles = data;
-            },
-            getTitles : function(){
-                return _titles;
-            }
+    .provider('global',[function(){
+        var _data = {}; // our data storage array
+        var _urls = {}; // end urls
+        this.setUrl = function(urls){
+            _urls = urls;
         };
+        var _set = function(what,val){
+            //console.log(what,val)
+            if(angular.isDefined(what)){
+                if (!_data[what]){
+                    _data[what]={val:null}}
+                else {
+                    //console.log(what,val)
+                    /*if (angular.isDefined(val) && (what=='filter'||what=='filterTags')
+                        && val.length && val.length>1) {
+                        //console.log(what);
+                        val.shift();
+                    }*/
+                    /*console.log(what,' ',angular.isDefined(val));
+                     console.log(val);*/
+                    _data[what].val=(angular.isDefined(val)) ? val: null;
+                    //console.log(_data[what]);
+                }
+                //_data[what] = (angular.isDefined(val)) ? val/*angular.copy(val)*/ : undefined;
+                return true;
+            }else{
+                return false;
+            }
+        }; // end _set
+
+// Provider method for set
+        this.set = _set;
+
+// service methods
+        this.$get = ['$http',function($http){
+
+            return {
+                request : function(url,vars){
+                    if(angular.isDefined(vars)){
+                        return $http.post(url,$.param(vars),{headers:{'Content-Type': 'application/x-www-form-urlencoded'}});
+                    }else{
+                        return $http.get(url);
+                    }
+                    //return ['a','d','c']
+                },
+
+                url : function(which){
+                    return _urls[which];
+                }, // end url
+
+                set : _set, // end set
+
+                get : function(what){
+                    if(angular.isDefined(what) && (what in _data))
+                        return _data[what];//angular.copy(_data[what]);
+                    else
+                        return undefined;
+                }, // end get
+
+                del : function(what){
+                    if(angular.isDefined(what)){
+                        var i = _data.indexOf(what);
+                        if(i >= 0)
+                            return _data.splice(i,1);
+                    }
+                    return false;
+                }, // end del
+
+                clear : function(){
+                    _data = [];
+                }, // end clear
+                getAll:function(){ return _data}
+            };
+        }]; // end $get
+    }]) // end appDataStoreSrvc / storage-services
 
 
-    }]) // end $global
-
-    .factory('subjectSrv',['$global',function($global){
+    .factory('globalSrv',['global',function(global){
         //-- Variables --//
-        var _send = $global.request;
-
+        var _send = global.request;
         //-- Methods --//
         return {
-            subjects : function(){
-                return _send($global.url('subjects'));
-            }, // end subjects
-
-            course : function(abbr,num){
-                var url = $global.url('course');
+            getData:function(name,abbr,num){
+                var url = global.url(name);
                 if(angular.isDefined(abbr) && !(angular.equals(abbr,null) || angular.equals(abbr,'')))
                     url += 'abbr/' + abbr + '/';
-
                 if(angular.isDefined(num) && !(angular.equals(num,null) || angular.equals(num,'')))
                     url += 'num/' + num;
-
                 return _send(url);
-            }, // end course
-            categories:function(){
-                return _send($global.url('categories'));
-            },
-            country:function(){
-                return _send($global.url('country'));
-            },
-            config:function(){
-                return _send($global.url('config'));
-            },
-            user:function(){
-                return _send($global.url('user'));
             }
-
         };
     }]) // end subjectSrv / module(myapp.services)
 
@@ -171,7 +149,7 @@ angular.module('myApp.services', []).
     .factory('UserService',[function(){
         var sdo={
             isLogged:false
-        }
+        };
         return sdo;
     }])
 
@@ -190,8 +168,8 @@ angular.module('myApp.services', []).
         });
     }])
 
-.factory('Auth',['$timeout', '$rootScope', 'Session', 'User', '$global',
-        function Auth($timeout, $rootScope, Session, User,$global) {
+.factory('Auth',['$timeout', '$rootScope', 'Session', 'User', 'global',
+        function Auth($timeout, $rootScope, Session, User,global) {
 
         // Get currentUser from cookie
        /* $rootScope.currentUser = $cookieStore.get('user') || null;
@@ -199,7 +177,8 @@ angular.module('myApp.services', []).
 
         //console.log($rootScope.currentUser);
         var user={},that=this;
-        User.get(function(aUser){
+           // user= global.get('user');
+        /*User.get(function(aUser){
             if (!aUser._id && aUser.id) { aUser._id=aUser.id;}
             if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
             if (aUser._id){
@@ -207,7 +186,7 @@ angular.module('myApp.services', []).
                 $timeout(function(){$rootScope.$broadcast('logged', user);},100)
             }
 
-        });
+        });*/
 
         return {
 
@@ -220,9 +199,11 @@ angular.module('myApp.services', []).
              */
             login: function(userInfo, callback) {
                 var cb = callback || angular.noop;
+                //console.log(userInfo);
                 return Session.save({
                     email: userInfo.email,
-                    password: userInfo.password
+                    password: userInfo.password,
+                    name:userInfo.name
                 }, function(aUser) {
                     //setUser(aUser);
                     if (!aUser._id && aUser.id) { aUser._id=aUser.id};
@@ -245,7 +226,7 @@ angular.module('myApp.services', []).
             logout: function(callback) {
                 var cb = callback || angular.noop;
                 return Session.delete(function() {
-                        user={};
+                        user=null;
                         $rootScope.$broadcast('logout', user);
                         return cb();
                     },
@@ -267,7 +248,7 @@ angular.module('myApp.services', []).
                     function(aUser) {
                         if (!aUser._id && aUser.id) { aUser._id=aUser.id;}
                         if (!aUser.id && aUser._id) { aUser.id=aUser._id;}
-                        user=aUser;
+                        //user=aUser;
                         $rootScope.$broadcast('logged', user);
                         return cb();
                         // авторизация сразу после регистрации
@@ -513,7 +494,7 @@ angular.module('myApp.services', []).
                 //console.log(item.quantity);
                 if(item.quantity)
                     i +=Number(item.quantity);
-            })
+            });
             return i;
         }
 
@@ -524,7 +505,7 @@ angular.module('myApp.services', []).
                 if (current.size == itemTo.size && current.stuff == itemTo.stuff && current.color == itemTo.color){
                     count = current.quantity;
                 }
-            })
+            });
             return count;
         }
 
@@ -618,7 +599,8 @@ angular.module('myApp.services', []).
                 currency=arg.currency,
                 profile=arg.profile,
                 shipper=arg.shipper,
-                shipperOffice=arg.shipperOffice;
+                shipperOffice=arg.shipperOffice,
+                user=arg.user;
            /* self.quantity=cartCount();
             self.sum:*/
             //var ss = $rootScope.user.profile.country.toLowerCase();
@@ -628,7 +610,7 @@ angular.module('myApp.services', []).
                 'cart':cartItems,
                 'comment':comment,
                 'lang':lang,
-                'user':$rootScope.user._id,
+                'user':user,
                 'quantity':cartCount(),
                 'sum':getTotalSum(),
                 'kurs':kurs,
@@ -639,7 +621,7 @@ angular.module('myApp.services', []).
                 profile:profile,
                 shipper:shipper,
                 shipperOffice:shipperOffice
-            }
+            };
             //console.log(order);return;
             $http.post('/api/order',order).then(
                 function (resp) {
@@ -723,10 +705,12 @@ angular.module('myApp.services', []).
            activeChat:{},
            chatList :[],
 
-            $get: function(socket,Chat,$rootScope,$timeout) {
+            $get: function(socket,Chat,$rootScope,$timeout,global) {
 
                 var that=this;
                 var msgs =[];
+                var user = global.get('user');
+                //console.log(user);
                 //activeChat={};
                 //var chatList =[];
                     //listUsers=[];
@@ -751,7 +735,7 @@ angular.module('myApp.services', []).
                         that.activeChat['page']=1;
                     }
 
-
+                    //console.log(user)
                     Chat.list({from:user._id},function(res){
                         //console.log(res);
                         for (var i= 0,l=res.length;i<l;i++){
@@ -759,13 +743,13 @@ angular.module('myApp.services', []).
                         }
                     });
                     if (user.role=='admin'){
-                        Chat.list(function(res){
+                        /*Chat.list(function(res){
                             //console.log(res);
                             for (var i= 0,l=res.length;i<l;i++){
                                 that.listUsers.push(res[i]);
                             }
 
-                        })
+                        })*/
 
                     }
                 }
@@ -783,10 +767,10 @@ angular.module('myApp.services', []).
 
                 socket.on('who are you',function(cb){
                     //console.log('who are you');
-                    var id = ($rootScope.user&&$rootScope.user._id)?$rootScope.user._id:'user not auth';
+                    var id = (user.val && user.val._id)?user.val._id:'user not auth';
                     //console.log(id);
                     cb(id);
-                })
+                });
 
                socket.on('new:msg',function(data,cb){
 
@@ -794,15 +778,15 @@ angular.module('myApp.services', []).
                    var from= data.from;
                    var to= data.to;
                    var status=true;
-                   if (from!=$rootScope.user._id){
+                   if (from!=user._id){
                        $.playSound('sounds/chat');
                    }
                    //console.log("$rootScope.$state.includes('language.chat') = "+$rootScope.$state.includes('language.chat'));
                     if ($rootScope.$state.includes('language.chat')){
                         if (to==that.activeChat._id || from==that.activeChat._id){
 
-                           if (from==$rootScope.user._id){
-                                var name =$rootScope.user.name;
+                           if (from==user.val._id){
+                                var name =user.val.name;
                                 var clas=true;
                                 var item= to;
                             } else{
@@ -821,11 +805,11 @@ angular.module('myApp.services', []).
                         cb({cb:"from mainFraim don't read",status:false});
                     }
                    //console.log(status);
-                   if (!status && from==$rootScope.user._id  && !_.findWhere(that.chatList, {_id: data.to})){
+                   if (!status && from==user.val._id  && !_.findWhere(that.chatList, {_id: data.to})){
                       // console.log('refreshList');
                        refreshLists(true);
                    }
-                   if (!status && from!=$rootScope.user._id){ // not read
+                   if (!status && from!=user.val._id){ // not read
                        //console.log('ssssss');
                        if (_.findWhere(that.chatList, {_id: data.from})){
                            _.findWhere(that.chatList, {_id: data.from}).newMsg++;
@@ -838,7 +822,7 @@ angular.module('myApp.services', []).
                        }
                    }
 
-                })
+                });
 
 
                 function changeChat(chat,cb){
@@ -851,8 +835,8 @@ angular.module('myApp.services', []).
 
 
                     _.findWhere(that.chatList, {_id: chat._id}).newMsg=0; // ????
-
-                    Chat.list({from:$rootScope.user._id,to:that.activeChat._id,page:that.activeChat['page']},function(res){
+                    //console.log(user);
+                    Chat.list({from:user.val._id,to:that.activeChat._id,page:that.activeChat['page']},function(res){
                         //console.log(res);
                         var arr=[];
                         if (res[0]){
@@ -867,13 +851,13 @@ angular.module('myApp.services', []).
                                 el.class=false;
                             }else{
                                 el.class=true;
-                                el.name=$rootScope.user.name;
+                                el.name=user.val.name;
                             }
                             el.date=el.created;
                             el.delete=false;
                             msgs[msgs.length]=el;
                             //console.log(msgs);
-                        })
+                        });
                         //console.log(msgs);
 
                         if (cb){
@@ -887,7 +871,7 @@ angular.module('myApp.services', []).
 
                 function moreMsgs(){
                     that.activeChat['page']++;
-                    Chat.list({from:$rootScope.user._id,to:that.activeChat._id,page:that.activeChat['page'],last:msgs[0]._id},function(res){
+                    Chat.list({from:user.val._id,to:that.activeChat._id,page:that.activeChat['page'],last:msgs[0]._id},function(res){
                         var arr=[];
                         if (res[0]){
                             that.activeChat['more']=res[0].more;
@@ -899,11 +883,11 @@ angular.module('myApp.services', []).
                                 el.class=false;
                             }else{
                                 el.class=true;
-                                el.name=$rootScope.user.name;
+                                el.name=user.val.name;
                             }
                             el.date=el.created;
                             arr.push(el);
-                        })
+                        });
                         //console.log(arr);
                         for(var i=arr.length-1;i>=0;i--){
                             msgs.unshift(arr[i]);
@@ -914,7 +898,7 @@ angular.module('myApp.services', []).
 
 
                 function sendMsg(msg,cb){
-                    socket.emit('new:msg',{from:$rootScope.user._id,to:that.activeChat._id,msg:msg});
+                    socket.emit('new:msg',{from:user.val._id,to:that.activeChat._id,msg:msg});
                     cb();
                 }
 
@@ -967,5 +951,5 @@ angular.module('myApp.services', []).
        }
 
 
-    })
+    });
 

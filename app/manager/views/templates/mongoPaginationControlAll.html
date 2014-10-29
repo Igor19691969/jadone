@@ -1,6 +1,6 @@
 <div style="font-weight: bold;">
 
-    <div class="input-group">
+    <div class="input-group" ng-hide="hideRow">
         <label style="margin-right: 10px">показывать по</label>
         <select ng-model="row" ng-change="paginator.rowsPerPage=row">
             <option  value="10">10</option>
